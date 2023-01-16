@@ -19,13 +19,13 @@
 
 #define AKNANO_DEVICE_GATEWAY_ENDPOINT AKNANO_FACTORY_UUID ".ota-lite.foundries.io"
 
-#define AKNANO_DEVICE_GATEWAY_ENDPOINT_LEN ( ( uint16_t ) ( sizeof( AKNANO_DEVICE_GATEWAY_ENDPOINT ) - 1 ) )
+#define AKNANO_DEVICE_GATEWAY_ENDPOINT_LEN ((uint16_t)(sizeof(AKNANO_DEVICE_GATEWAY_ENDPOINT) - 1))
 
-static const uint32_t akNanoDeviceGateway_ROOT_CERTIFICATE_PEM_LEN = sizeof( AKNANO_DEVICE_GATEWAY_CERTIFICATE );
+static const uint32_t akNanoDeviceGateway_ROOT_CERTIFICATE_PEM_LEN = sizeof(AKNANO_DEVICE_GATEWAY_CERTIFICATE);
 
 static char bodyBuffer[500];
 
-static void fill_network_info(char* output, size_t max_length)
+static void fill_network_info(char *output, size_t max_length)
 {
     char ipv4[4];
     uint8_t mac[6];
@@ -33,39 +33,38 @@ static void fill_network_info(char* output, size_t max_length)
     aknano_get_ipv4_and_mac(ipv4, mac);
 
     snprintf(output, max_length,
-        "{" \
-        " \"local_ipv4\": \"%u.%u.%u.%u\"," \
-        " \"mac\": \"%02x:%02x:%02x:%02x:%02x:%02x\"" \
-        "}",
-        ipv4[0], ipv4[1], ipv4[2], ipv4[3],
-        mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]
-    );
+             "{" \
+             " \"local_ipv4\": \"%u.%u.%u.%u\"," \
+             " \"mac\": \"%02x:%02x:%02x:%02x:%02x:%02x\"" \
+             "}",
+             ipv4[0], ipv4[1], ipv4[2], ipv4[3],
+             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]
+             );
 
     LogInfo(("fill_network_info: %s", output));
 }
 
-void UpdateSettingValue(const char*, int);
+void UpdateSettingValue(const char *, int);
 
-static void parse_config(const char* config_data, int buffer_len, struct aknano_settings *aknano_settings)
+static void parse_config(const char *config_data, int buffer_len, struct aknano_settings *aknano_settings)
 {
-    JSONStatus_t result = JSON_Validate( config_data, buffer_len );
-    char * value;
+    JSONStatus_t result = JSON_Validate(config_data, buffer_len);
+    char *value;
     unsigned int valueLength;
     int int_value;
 
 
     // {"polling_interval":{"Value":"10","Unencrypted":true},"tag":{"Value":"devel","Unencrypted":true},"z-50-fioctl.toml":{"Value":"\n[pacman]\n  tags = \"devel\"\n","Unencrypted":true,"OnChanged":["/usr/share/fioconfig/handlers/aktualizr-toml-update"]}}"
-    if( result == JSONSuccess )
-    {
-        result = JSON_Search( config_data, buffer_len,
+    if (result == JSONSuccess) {
+        result = JSON_Search(config_data, buffer_len,
                              "tag" TUF_JSON_QUERY_KEY_SEPARATOR "Value", strlen("tag" TUF_JSON_QUERY_KEY_SEPARATOR "Value"),
-                              &value, &valueLength );
+                             &value, &valueLength);
 
-        if( result == JSONSuccess ) {
+        if (result == JSONSuccess) {
             if (strncmp(value, aknano_settings->tag, valueLength)) {
                 LogInfo(("parse_config_data: Tag has changed ('%s' => '%.*s')",
-                        aknano_settings->tag,
-                        valueLength, value));
+                         aknano_settings->tag,
+                         valueLength, value));
                 strncpy(aknano_settings->tag, value,
                         valueLength);
                 aknano_settings->tag[valueLength] = '\0';
@@ -77,19 +76,18 @@ static void parse_config(const char* config_data, int buffer_len, struct aknano_
             LogInfo(("parse_config_data: Tag config not found"));
         }
 
-        result = JSON_Search( config_data, buffer_len,
+        result = JSON_Search(config_data, buffer_len,
                              "polling_interval" TUF_JSON_QUERY_KEY_SEPARATOR "Value", strlen("polling_interval" TUF_JSON_QUERY_KEY_SEPARATOR "Value"),
-                              &value, &valueLength );
+                             &value, &valueLength);
 
-        if( result == JSONSuccess ) {
-            if (sscanf(value, "%d", &int_value) <= 0) {
+        if (result == JSONSuccess) {
+            if (sscanf(value, "%d", &int_value) <= 0)
                 LogWarn(("Invalid polling_interval '%s'", value));
-                // return;
-            }
+            // return;
 
             if (int_value != aknano_settings->polling_interval) {
                 LogInfo(("parse_config_data: Polling interval has changed (%d => %d)",
-                        aknano_settings->polling_interval, int_value));
+                         aknano_settings->polling_interval, int_value));
                 aknano_settings->polling_interval = int_value;
                 // aknano_write_to_nvs(AKNANO_NVS_ID_POLLING_INTERVAL,
                 //         &aknano_settings->polling_interval,
@@ -102,18 +100,16 @@ static void parse_config(const char* config_data, int buffer_len, struct aknano_
             LogInfo(("parse_config_data: polling_interval config not found"));
         }
 
-        result = JSON_Search( config_data, buffer_len,
+        result = JSON_Search(config_data, buffer_len,
                              "btn_polling_interval" TUF_JSON_QUERY_KEY_SEPARATOR "Value", strlen("btn_polling_interval" TUF_JSON_QUERY_KEY_SEPARATOR "Value"),
-                              &value, &valueLength );
+                             &value, &valueLength);
 
-        if( result == JSONSuccess ) {
-            if (sscanf(value, "%d", &int_value) <= 0) {
+        if (result == JSONSuccess) {
+            if (sscanf(value, "%d", &int_value) <= 0)
                 LogWarn(("Invalid btn_polling_interval '%s'", value));
-                // return;
-            }
+            // return;
             UpdateSettingValue("btn_polling_interval", int_value);
         }
-
     } else {
         LogWarn(("Invalid config JSON result=%d", result));
     }
@@ -163,9 +159,9 @@ static void get_time_str(time_t boot_up_epoch, char *output)
     struct tm *tm = gmtime(&current_epoch_sec);
 
     sprintf(output, "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ",
-        tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
-        tm->tm_hour, tm->tm_min, tm->tm_sec,
-        0);
+            tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+            tm->tm_hour, tm->tm_min, tm->tm_sec,
+            0);
 
     // LogInfo(("get_time_str: %s (boot_up_epoch=%lld)", output, boot_up_epoch));
 }
@@ -174,11 +170,12 @@ static void get_time_str(time_t boot_up_epoch, char *output)
 #include "psa/crypto.h"
 static void btox(char *xp, const char *bb, int n)
 {
-    const char xx[]= "0123456789ABCDEF";
-    while (--n >= 0) xp[n] = xx[(bb[n>>1] >> ((1 - (n&1)) << 2)) & 0xF];
+    const char xx[] = "0123456789ABCDEF";
+
+    while (--n >= 0) xp[n] = xx[(bb[n >> 1] >> ((1 - (n & 1)) << 2)) & 0xF];
 }
 
-static void serial_string_to_uuid_string(const char* serial, char *uuid)
+static void serial_string_to_uuid_string(const char *serial, char *uuid)
 {
     const char *s;
     char *u;
@@ -187,10 +184,10 @@ static void serial_string_to_uuid_string(const char* serial, char *uuid)
     s = serial;
     u = uuid;
 
-    for(i=0; i<36; i++) {
-        if (i == 8 || i == 13 || i == 18 || i == 23)
+    for (i = 0; i < 36; i++) {
+        if (i == 8 || i == 13 || i == 18 || i == 23) {
             *u = '-';
-        else {
+        } else {
             *u = *s;
             s++;
         }
@@ -202,6 +199,7 @@ static void serial_string_to_uuid_string(const char* serial, char *uuid)
 int aknano_gen_serial_and_uuid(char *uuid_string, char *serial_string)
 {
     char serial_bytes[16];
+
     AkNanoGenRandomBytes(serial_bytes, sizeof(serial_bytes));
     btox(serial_string, serial_bytes, sizeof(serial_bytes) * 2);
     serial_string_to_uuid_string(serial_string, uuid_string);
@@ -213,26 +211,25 @@ int aknano_gen_serial_and_uuid(char *uuid_string, char *serial_string)
 
 
 static bool fill_event_payload(char *payload,
-                    struct aknano_settings *aknano_settings,
-                    const char* event_type,
-                    int version, int success)
+                               struct aknano_settings *aknano_settings,
+                               const char *event_type,
+                               int version, int success)
 {
     int old_version = aknano_settings->running_version;
     int new_version = version;
     char details[200];
     char current_time_str[50];
     char *correlation_id = aknano_settings->ongoing_update_correlation_id;
-    char target[sizeof(aknano_settings->hwid)+15];
+    char target[sizeof(aknano_settings->hwid) + 15];
     char evt_uuid[AKNANO_MAX_UUID_LENGTH], _serial_string[AKNANO_MAX_SERIAL_LENGTH];
-    char* success_string;
+    char *success_string;
 
-    if (success == AKNANO_EVENT_SUCCESS_UNDEFINED) {
+    if (success == AKNANO_EVENT_SUCCESS_UNDEFINED)
         success_string = version < 0? "\"success\": false," : "";
-    } else if (success == AKNANO_EVENT_SUCCESS_TRUE) {
+    else if (success == AKNANO_EVENT_SUCCESS_TRUE)
         success_string = "\"success\": true,";
-    } else {
+    else
         success_string = "\"success\": false,";
-    }
 
     aknano_gen_serial_and_uuid(evt_uuid, _serial_string);
 
@@ -247,46 +244,45 @@ static bool fill_event_payload(char *payload,
 
     if (!strcmp(event_type, AKNANO_EVENT_INSTALLATION_APPLIED)) {
         snprintf(details, sizeof(details), "Updating from v%d to v%d tag: %s. Image written to flash. Rebooting.",
-            old_version, new_version, aknano_settings->tag);
+                 old_version, new_version, aknano_settings->tag);
     } else if (!strcmp(event_type, AKNANO_EVENT_INSTALLATION_COMPLETED)) {
-        if (version < 0) {
+        if (version < 0)
             snprintf(details, sizeof(details), "Rollback to v%d after failed update to v%d.",
-                old_version, aknano_settings->last_applied_version);
-        } else {
+                     old_version, aknano_settings->last_applied_version);
+        else
             snprintf(details, sizeof(details), "Updated from v%d to v%d. Image confirmed. Running on %s slot.",
-                old_version, new_version, aknano_settings->image_position == 1? "PRIMARY" : "SECONDARY");
-        }
+                     old_version, new_version, aknano_settings->image_position == 1? "PRIMARY" : "SECONDARY");
     } else {
         snprintf(details, sizeof(details), "Updating from v%d to v%d tag: %s.",
-            old_version, new_version, aknano_settings->tag);
+                 old_version, new_version, aknano_settings->tag);
     }
 
     // if (aknano_settings->boot_up_epoch)
-        get_time_str(aknano_settings->boot_up_epoch, current_time_str);
+    get_time_str(aknano_settings->boot_up_epoch, current_time_str);
     // else
     //     get_pseudo_time_str(aknano_settings->boot_up_epoch, current_time_str, event_type, success);
 
     LogInfo(("fill_event_payload: time=%s cor_id=%s uuid=%s", current_time_str, correlation_id, evt_uuid));
 
     snprintf(payload, 1000,
-        "[{" \
-            "\"id\": \"%s\","\
-            "\"deviceTime\": \"%s\","\
-            "\"eventType\": {"\
-                "\"id\": \"%s\","\
-                "\"version\": 0"\
-            "},"\
-            "\"event\": {"\
-                "\"correlationId\": \"%s\","\
-                "\"targetName\": \"%s\","\
-                "\"version\": \"%d\","\
-                "%s"\
-                "\"details\": \"%s\""\
-            "}"\
-        "}]",
-        evt_uuid, current_time_str, event_type,
-        correlation_id, target, new_version,
-        success_string, details);
+             "[{" \
+             "\"id\": \"%s\"," \
+             "\"deviceTime\": \"%s\"," \
+             "\"eventType\": {" \
+             "\"id\": \"%s\"," \
+             "\"version\": 0" \
+             "}," \
+             "\"event\": {" \
+             "\"correlationId\": \"%s\"," \
+             "\"targetName\": \"%s\"," \
+             "\"version\": \"%d\"," \
+             "%s" \
+             "\"details\": \"%s\"" \
+             "}" \
+             "}]",
+             evt_uuid, current_time_str, event_type,
+             correlation_id, target, new_version,
+             success_string, details);
     LogInfo(("Event: %s %s %s", event_type, details, success_string));
     return true;
 }
@@ -297,35 +293,35 @@ BaseType_t AkNano_ConnectToDevicesGateway(struct aknano_network_context *network
 
     init_network_context(network_context);
     ret = aknano_mtls_connect(network_context,
-                                        AKNANO_DEVICE_GATEWAY_ENDPOINT,
-                                        AKNANO_DEVICE_GATEWAY_ENDPOINT_LEN,
-                                        AKNANO_DEVICE_GATEWAY_PORT,
-                                        AKNANO_DEVICE_GATEWAY_CERTIFICATE,
-                                        akNanoDeviceGateway_ROOT_CERTIFICATE_PEM_LEN);
+                              AKNANO_DEVICE_GATEWAY_ENDPOINT,
+                              AKNANO_DEVICE_GATEWAY_ENDPOINT_LEN,
+                              AKNANO_DEVICE_GATEWAY_PORT,
+                              AKNANO_DEVICE_GATEWAY_CERTIFICATE,
+                              akNanoDeviceGateway_ROOT_CERTIFICATE_PEM_LEN);
 
     // LogInfo(("prvConnectToServer Result: %d", xDemoStatus));
-    if(ret != pdPASS)
-    {
+    if (ret != pdPASS) {
         /* Log error to indicate connection failure after all
-            * reconnect attempts are over. */
-        LogError( ( "Failed to connect to HTTP server") );
+         * reconnect attempts are over. */
+        LogError(("Failed to connect to HTTP server"));
         return pdFAIL;
     }
     return pdPASS;
 }
 
-BaseType_t AkNano_SendHttpRequest( struct aknano_network_context *network_context,
-                                      const char * pcMethod,
-                                      const char * pcPath,
-                                      const char * pcBody,
-                                      size_t xBodyLen,
-                                      struct aknano_settings *aknano_settings
-                                      )
+BaseType_t AkNano_SendHttpRequest(struct aknano_network_context *network_context,
+                                  const char *                   pcMethod,
+                                  const char *                   pcPath,
+                                  const char *                   pcBody,
+                                  size_t                         xBodyLen,
+                                  struct aknano_settings *       aknano_settings
+                                  )
 {
     char *tag = aknano_settings->tag;
     int version = aknano_settings->running_version;
 
     char active_target[200];
+
     snprintf(active_target, sizeof(active_target), "%s-v%d", aknano_settings->hwid, version);
 
     const char *header_keys[] = { "x-ats-tags", "x-ats-target" };
@@ -350,8 +346,8 @@ BaseType_t AkNano_SendHttpRequest( struct aknano_network_context *network_contex
 
 
 bool AkNanoSendEvent(struct aknano_settings *aknano_settings,
-                    const char* event_type,
-                    int version, int success)
+                     const char *event_type,
+                     int version, int success)
 {
     struct aknano_network_context network_context;
 
@@ -371,7 +367,7 @@ bool AkNanoSendEvent(struct aknano_settings *aknano_settings,
     fill_event_payload(bodyBuffer, aknano_settings, event_type, version, success);
 
     LogInfo((ANSI_COLOR_YELLOW "Sending %s event" ANSI_COLOR_RESET,
-            event_type));
+             event_type));
     LogInfo(("Event payload: %.80s (...)", bodyBuffer));
 
     AkNano_SendHttpRequest(
@@ -400,6 +396,7 @@ int AkNanoPoll(struct aknano_context *aknano_context)
     // off_t offset = 0;
     struct aknano_settings *aknano_settings = aknano_context->settings;
     int tuf_ret = 0;
+
 #ifdef AKNANO_ALLOW_PROVISIONING
     static bool tuf_root_is_provisioned = false;
 #endif
@@ -407,18 +404,17 @@ int AkNanoPoll(struct aknano_context *aknano_context)
     LogInfo(("AkNanoPoll. Version=%lu  Tag=%s", aknano_settings->running_version, aknano_settings->tag));
 
     xDemoStatus = AkNano_ConnectToDevicesGateway(&network_context);
-    if( xDemoStatus == pdPASS )
-    {
-        xDemoStatus =  AkNano_SendHttpRequest(
-                                        &network_context,
-                                        HTTP_METHOD_GET,
-                                        "/config", "", 0,
-                                        aknano_context->settings);
+    if (xDemoStatus == pdPASS) {
+        xDemoStatus = AkNano_SendHttpRequest(
+            &network_context,
+            HTTP_METHOD_GET,
+            "/config", "", 0,
+            aknano_context->settings);
         if (xDemoStatus == pdPASS) {
             if (network_context.reply_body == NULL)
                 LogInfo(("Device has no config set"));
             else
-                parse_config((const char*)network_context.reply_body, network_context.reply_body_len, aknano_context->settings);
+                parse_config((const char *)network_context.reply_body, network_context.reply_body_len, aknano_context->settings);
         }
 
         time_t reference_time = get_current_epoch(aknano_settings->boot_up_epoch);
@@ -441,24 +437,23 @@ int AkNanoPoll(struct aknano_context *aknano_context)
         }
 
         if (tuf_ret == 0) {
-            parse_targets_metadata((const char*)tuf_data_buffer, strlen((char*)tuf_data_buffer), aknano_context);
+            parse_targets_metadata((const char *)tuf_data_buffer, strlen((char *)tuf_data_buffer), aknano_context);
 
             // aknano_handle_manifest_data(aknano_context, single_target_buffer, &offset, (uint8_t*)xResponse.pBody, xResponse.bodyLen);
             if (aknano_context->selected_target.version == 0) {
                 LogInfo(("* No matching target found in manifest"));
             } else {
                 LogInfo(("* Manifest data parsing result: highest version=%ld  last unconfirmed applied=%d  running version=%ld",
-                    aknano_context->selected_target.version,
-                    aknano_settings->last_applied_version,
-                    aknano_settings->running_version));
+                         aknano_context->selected_target.version,
+                         aknano_settings->last_applied_version,
+                         aknano_settings->running_version));
 
                 if (aknano_context->selected_target.version == aknano_settings->last_applied_version) {
                     LogInfo(("* Same version was already applied (and failed). Do not retrying it"));
-
                 } else if (aknano_context->settings->running_version < aknano_context->selected_target.version) {
                     LogInfo((ANSI_COLOR_GREEN "* Update required: %lu -> %ld" ANSI_COLOR_RESET,
-                            aknano_context->settings->running_version,
-                            aknano_context->selected_target.version));
+                             aknano_context->settings->running_version,
+                             aknano_context->selected_target.version));
                     isUpdateRequired = true;
                 } else {
                     LogInfo(("* No update required"));
@@ -467,24 +462,24 @@ int AkNanoPoll(struct aknano_context *aknano_context)
         }
 
         snprintf(bodyBuffer, sizeof(bodyBuffer),
-            "{ "\
-            " \"product\": \"%s\"," \
-            " \"description\": \"MCUXpresso PoC\"," \
-            " \"claimed\": true, "\
-            " \"serial\": \"%s\", "\
-            " \"id\": \"%s\", "\
-            " \"class\": \"MCU\" "\
-            "}",
-            CONFIG_BOARD, aknano_settings->serial, CONFIG_BOARD);
+                 "{ " \
+                 " \"product\": \"%s\"," \
+                 " \"description\": \"MCUXpresso PoC\"," \
+                 " \"claimed\": true, " \
+                 " \"serial\": \"%s\", " \
+                 " \"id\": \"%s\", " \
+                 " \"class\": \"MCU\" " \
+                 "}",
+                 CONFIG_BOARD, aknano_settings->serial, CONFIG_BOARD);
 
         AkNano_SendHttpRequest(&network_context, HTTP_METHOD_PUT,
-                            "/system_info", bodyBuffer, strlen(bodyBuffer),
-                            aknano_context->settings);
+                               "/system_info", bodyBuffer, strlen(bodyBuffer),
+                               aknano_context->settings);
 
         fill_network_info(bodyBuffer, sizeof(bodyBuffer));
-        AkNano_SendHttpRequest( &network_context, HTTP_METHOD_PUT,
-                            "/system_info/network", bodyBuffer, strlen(bodyBuffer),
-                            aknano_context->settings);
+        AkNano_SendHttpRequest(&network_context, HTTP_METHOD_PUT,
+                               "/system_info/network", bodyBuffer, strlen(bodyBuffer),
+                               aknano_context->settings);
 
         // LogInfo(("aknano_settings->tag=%s",aknano_settings->tag));
         sprintf(bodyBuffer,
@@ -492,15 +487,14 @@ int AkNanoPoll(struct aknano_context *aknano_context)
                 "poll_interval = %d\n" \
                 "hw_id = \"%s\"\n" \
                 "tag = \"%s\"\n" \
-                "binary_compilation_local_time = \""__DATE__ " " __TIME__"\"\n"
+                "binary_compilation_local_time = \""__DATE__ " " __TIME__ "\"\n"
                 "provisioning_mode = \"" AKNANO_PROVISIONING_MODE "\"",
                 aknano_settings->polling_interval,
                 CONFIG_BOARD,
                 aknano_settings->tag);
-        AkNano_SendHttpRequest( &network_context, HTTP_METHOD_PUT,
-                            "/system_info/config", bodyBuffer, strlen(bodyBuffer),
-                            aknano_context->settings);
-
+        AkNano_SendHttpRequest(&network_context, HTTP_METHOD_PUT,
+                               "/system_info/config", bodyBuffer, strlen(bodyBuffer),
+                               aknano_context->settings);
     }
 
     /* Close the network connection.  */
@@ -508,13 +502,12 @@ int AkNanoPoll(struct aknano_context *aknano_context)
 
 
     if (isUpdateRequired) {
-
         // version = hb_context.selected_target.version;
 
         char unused_serial[AKNANO_MAX_SERIAL_LENGTH];
         /* Gen a random correlation ID for the update events */
         aknano_gen_serial_and_uuid(aknano_settings->ongoing_update_correlation_id,
-                    unused_serial);
+                                   unused_serial);
 
 
         // aknano_write_to_nvs(AKNANO_NVS_ID_ONGOING_UPDATE_COR_ID,
@@ -540,11 +533,10 @@ int AkNanoPoll(struct aknano_context *aknano_context)
             LogInfo(("Requesting update on next boot (ReadyForTest)"));
             status_t status;
             status = bl_update_image_state(kSwapType_ReadyForTest);
-            if (status != kStatus_Success) {
+            if (status != kStatus_Success)
                 LogWarn(("Error setting image as ReadyForTest. status=%d", status));
-            } else {
+            else
                 isRebootRequired = true;
-            }
         } else {
             AkNanoSendEvent(aknano_context->settings, AKNANO_EVENT_DOWNLOAD_COMPLETED,
                             aknano_context->selected_target.version,
@@ -559,7 +551,7 @@ int AkNanoPoll(struct aknano_context *aknano_context)
 
     if (isRebootRequired) {
         LogInfo(("Rebooting...."));
-        vTaskDelay( pdMS_TO_TICKS( 100 ) );
+        vTaskDelay(pdMS_TO_TICKS(100));
         NVIC_SystemReset();
     }
 

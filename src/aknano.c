@@ -28,7 +28,7 @@
  * response after the HTTP request is sent out. However, the user can also
  * decide to use separate buffers for storing the HTTP request and response.
  */
-uint8_t ucUserBuffer[ democonfigUSER_BUFFER_LENGTH ];
+uint8_t ucUserBuffer[democonfigUSER_BUFFER_LENGTH];
 
 /**
  * @brief Global entry time into the application to use as a reference timestamp
@@ -46,6 +46,7 @@ static struct aknano_context xaknano_context;
 long unsigned int AkNanoGetTime(void)
 {
     static long unsigned int t;
+
     //  = clock() * 1000 / CLOCKS_PER_SEC;
     t++;
     // LogInfo(( "osfGetTime %d", t) );
@@ -55,13 +56,14 @@ long unsigned int AkNanoGetTime(void)
 void aknano_dump_memory_info(const char *context)
 {
     LogInfo(("MEMORY (%s): Stack high watermark: %u.  Minimum free heap: %u",
-            context, uxTaskGetStackHighWaterMark( NULL ), xPortGetMinimumEverFreeHeapSize()));
+             context, uxTaskGetStackHighWaterMark(NULL), xPortGetMinimumEverFreeHeapSize()));
 }
 #endif
 
 void AkNanoUpdateSettingsInFlash(struct aknano_settings *aknano_settings)
 {
     char flashPageBuffer[256];
+
     memset(flashPageBuffer, 0, sizeof(flashPageBuffer));
 
     memcpy(flashPageBuffer, &aknano_settings->last_applied_version, sizeof(int));
@@ -69,13 +71,13 @@ void AkNanoUpdateSettingsInFlash(struct aknano_settings *aknano_settings)
     memcpy(flashPageBuffer + sizeof(int) * 2, aknano_settings->ongoing_update_correlation_id,
            sizeof(aknano_settings->ongoing_update_correlation_id));
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
-    flashPageBuffer[sizeof(int)*2 + sizeof(aknano_settings->ongoing_update_correlation_id)] =
+    flashPageBuffer[sizeof(int) * 2 + sizeof(aknano_settings->ongoing_update_correlation_id)] =
         aknano_settings->is_device_registered;
 #endif
     LogInfo(("Saving buffer: 0x%x 0x%x 0x%x 0x%x    0x%x 0x%x 0x%x 0x%x    0x%x 0x%x 0x%x 0x%x",
-    flashPageBuffer[0], flashPageBuffer[1], flashPageBuffer[2], flashPageBuffer[3],
-    flashPageBuffer[4], flashPageBuffer[5], flashPageBuffer[6], flashPageBuffer[7],
-    flashPageBuffer[8], flashPageBuffer[9], flashPageBuffer[10], flashPageBuffer[11]));
+             flashPageBuffer[0], flashPageBuffer[1], flashPageBuffer[2], flashPageBuffer[3],
+             flashPageBuffer[4], flashPageBuffer[5], flashPageBuffer[6], flashPageBuffer[7],
+             flashPageBuffer[8], flashPageBuffer[9], flashPageBuffer[10], flashPageBuffer[11]));
     UpdateFlashStoragePage(AKNANO_FLASH_OFF_STATE_BASE, flashPageBuffer);
 }
 
@@ -147,8 +149,8 @@ void AkNanoInitSettings(struct aknano_settings *aknano_settings)
 #endif
 
     snprintf(aknano_settings->device_name, sizeof(aknano_settings->device_name),
-            "%s-%s",
-            CONFIG_BOARD, aknano_settings->serial);
+             "%s-%s",
+             CONFIG_BOARD, aknano_settings->serial);
 
     LogInfo(("AkNanoInitSettings: device_name=%s",
              aknano_settings->device_name));
@@ -164,9 +166,9 @@ static int aknano_handle_img_confirmed(struct aknano_settings *aknano_settings)
     uint32_t currentStatus;
 
 #ifdef AKNANO_TEST_ROLLBACK
-    #warning "Compiling broken image for rollback test"
+#warning "Compiling broken image for rollback test"
     LogError((ANSI_COLOR_RED "This is a rollback test. Rebooting in 5 seconds" ANSI_COLOR_RESET));
-    vTaskDelay( pdMS_TO_TICKS( 5000 ) );
+    vTaskDelay(pdMS_TO_TICKS(5000));
     NVIC_SystemReset();
 #endif
 
@@ -192,11 +194,10 @@ static int aknano_handle_img_confirmed(struct aknano_settings *aknano_settings)
     if (aknano_settings->last_applied_version
         && aknano_settings->last_applied_version != aknano_settings->running_version
         && strnlen(aknano_settings->ongoing_update_correlation_id, AKNANO_MAX_UPDATE_CORRELATION_ID_LENGTH) > 0) {
-
         LogInfo(("A rollback was done"));
         AkNanoSendEvent(aknano_settings,
-                  AKNANO_EVENT_INSTALLATION_COMPLETED,
-                  -1, AKNANO_EVENT_SUCCESS_FALSE);
+                        AKNANO_EVENT_INSTALLATION_COMPLETED,
+                        -1, AKNANO_EVENT_SUCCESS_FALSE);
         //aknano_write_to_nvs(AKNANO_NVS_ID_ONGOING_UPDATE_COR_ID, "", 0);
 
         memset(aknano_settings->ongoing_update_correlation_id, 0,
@@ -251,8 +252,7 @@ static int aknano_handle_img_confirmed(struct aknano_settings *aknano_settings)
 #endif
     }
 
-    if (aknano_settings->last_confirmed_version != aknano_settings->running_version)
-    {
+    if (aknano_settings->last_confirmed_version != aknano_settings->running_version) {
         // TODO: Should not be required, but doing it here because of temp/permanent bug. May not be required anymore
         AkNanoSendEvent(aknano_settings, AKNANO_EVENT_INSTALLATION_COMPLETED, 0, AKNANO_EVENT_SUCCESS_TRUE);
         memset(aknano_settings->ongoing_update_correlation_id, 0,
@@ -270,7 +270,7 @@ static int aknano_handle_img_confirmed(struct aknano_settings *aknano_settings)
     return 0;
 }
 
-static bool is_certificate_valid(const char* pem)
+static bool is_certificate_valid(const char *pem)
 {
     size_t cert_len;
 
@@ -292,11 +292,10 @@ static bool is_valid_certificate_available_()
     char device_certificate[AKNANO_CERT_BUF_SIZE];
 
     cert_status = aknano_read_device_certificate(device_certificate, sizeof(device_certificate));
-    if (cert_status != CKR_OK) {
+    if (cert_status != CKR_OK)
         is_certificate_available_cache = false;
-    } else {
+    else
         is_certificate_available_cache = is_certificate_valid(device_certificate);
-    }
     LogInfo(("Device certificate available? %s", is_certificate_available_cache? "YES": "NO"));
     return is_certificate_available_cache;
 }
@@ -340,7 +339,7 @@ static void AkNanoInit(struct aknano_settings *aknano_settings)
     prvDestroyDefaultCryptoObjects();
 #ifdef AKNANO_ENABLE_EL2GO
     LogWarn((ANSI_COLOR_RED "Halting execution" ANSI_COLOR_RESET));
-    for(;;);
+    for (;;);
 #endif
 #endif
 
@@ -352,7 +351,7 @@ static void AkNanoInit(struct aknano_settings *aknano_settings)
         vTaskDelay(pdMS_TO_TICKS(1000));
         if (!is_device_serial_set()) {
             LogError((ANSI_COLOR_RED "Fatal: Error fetching device serial" ANSI_COLOR_RESET));
-            vTaskDelay(pdMS_TO_TICKS( 120000 ));
+            vTaskDelay(pdMS_TO_TICKS(120000));
         }
     } else {
         LogInfo(("Device serial is set"));
@@ -364,7 +363,7 @@ static void AkNanoInit(struct aknano_settings *aknano_settings)
         vTaskDelay(pdMS_TO_TICKS(1000));
         if (!is_valid_certificate_available(false)) {
             LogError((ANSI_COLOR_RED "Fatal: Error fetching device certificate" ANSI_COLOR_RESET));
-            vTaskDelay(pdMS_TO_TICKS( 120000 ));
+            vTaskDelay(pdMS_TO_TICKS(120000));
         }
     } else {
         LogInfo(("Device certificate and serial are set"));
@@ -374,9 +373,8 @@ static void AkNanoInit(struct aknano_settings *aknano_settings)
 
 #if defined(AKNANO_ENABLE_EL2GO) && defined(AKNANO_ALLOW_PROVISIONING)
     LogInfo(("EL2Go provisioning enabled. Waiting for secure objects to be retrieved"));
-    while (!is_valid_certificate_available(true) || !el2go_agent_stopped) {
-        vTaskDelay( pdMS_TO_TICKS( 1000 ) );
-    }
+    while (!is_valid_certificate_available(true) || !el2go_agent_stopped)
+        vTaskDelay(pdMS_TO_TICKS(1000));
     LogInfo(("EL2GO provisioning succeeded. Proceeding"));
 #endif
     LogInfo(("Initializing settings..."));
@@ -402,7 +400,7 @@ static void AkNanoInit(struct aknano_settings *aknano_settings)
 
 #ifdef AKNANO_DELETE_TUF_DATA
     LogWarn((ANSI_COLOR_RED "**** Reseting TUF data ****" ANSI_COLOR_RESET));
-    #include "libtufnano.h"
+#include "libtufnano.h"
     tuf_client_write_local_file(ROLE_ROOT, "\xFF", 1, NULL);
     tuf_client_write_local_file(ROLE_TIMESTAMP, "\xFF", 1, NULL);
     tuf_client_write_local_file(ROLE_SNAPSHOT, "\xFF", 1, NULL);
@@ -413,8 +411,8 @@ static void AkNanoInit(struct aknano_settings *aknano_settings)
 #endif
 }
 
-static void AkNanoInitContext(struct aknano_context *aknano_context,
-                            struct aknano_settings *aknano_settings)
+static void AkNanoInitContext(struct aknano_context * aknano_context,
+                              struct aknano_settings *aknano_settings)
 {
     memset(aknano_context, 0, sizeof(*aknano_context));
     aknano_context->settings = aknano_settings;
@@ -424,25 +422,25 @@ static void AkNanoInitContext(struct aknano_context *aknano_context,
 /**
  * @brief Entry point of demo.
  */
-int RunAkNanoDemo( bool xAwsIotMqttMode,
-                        const char * pIdentifier,
-                        void * pNetworkServerInfo,
-                        void * pNetworkCredentialInfo,
-                        const IotNetworkInterface_t * pxNetworkInterface )
+int RunAkNanoDemo(bool                         xAwsIotMqttMode,
+                  const char *                 pIdentifier,
+                  void *                       pNetworkServerInfo,
+                  void *                       pNetworkCredentialInfo,
+                  const IotNetworkInterface_t *pxNetworkInterface)
 {
     int sleepTime;
 
-    ( void ) xAwsIotMqttMode;
-    ( void ) pIdentifier;
-    ( void ) pNetworkServerInfo;
-    ( void ) pNetworkCredentialInfo;
-    ( void ) pxNetworkInterface;
+    (void)xAwsIotMqttMode;
+    (void)pIdentifier;
+    (void)pNetworkServerInfo;
+    (void)pNetworkCredentialInfo;
+    (void)pxNetworkInterface;
 
 #ifdef AKNANO_TEST
     LogInfo(("AKNano RunAkNanoDemoTest Begin"));
     RunAkNanoTest();
     LogInfo(("AKNano RunAkNanoDemoTest Done"));
-    vTaskDelay( pdMS_TO_TICKS( 1000 ) );
+    vTaskDelay(pdMS_TO_TICKS(1000));
 #endif
 
     LogInfo((ANSI_COLOR_YELLOW "AKNano RunAkNanoDemo mode '" AKNANO_PROVISIONING_MODE "'" ANSI_COLOR_RESET));
@@ -470,7 +468,7 @@ int RunAkNanoDemo( bool xAwsIotMqttMode,
         aknano_dump_memory_info("After aknano poll");
 #endif
         LogInfo(("Sleeping %d ms\n\n", sleepTime));
-        vTaskDelay( pdMS_TO_TICKS( sleepTime ) );
+        vTaskDelay(pdMS_TO_TICKS(sleepTime));
     }
     return 0;
 }

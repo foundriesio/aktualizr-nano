@@ -18,24 +18,24 @@
 /* TUF "callbacks" */
 #define AKNANO_FLASH_OFF_TUF_ROLES (16 * 1024)
 #define AKNANO_FLASH_OFF_TUF_ROLE_ROOT (AKNANO_FLASH_OFF_TUF_ROLES)
-#define AKNANO_FLASH_OFF_TUF_ROLE_TIMESTAMP (AKNANO_FLASH_OFF_TUF_ROLE_ROOT + (8*1024))
-#define AKNANO_FLASH_OFF_TUF_ROLE_SNAPSHOT (AKNANO_FLASH_OFF_TUF_ROLE_TIMESTAMP + (8*1024))
-#define AKNANO_FLASH_OFF_TUF_ROLE_TARGETS (AKNANO_FLASH_OFF_TUF_ROLE_SNAPSHOT + (8*1024))
+#define AKNANO_FLASH_OFF_TUF_ROLE_TIMESTAMP (AKNANO_FLASH_OFF_TUF_ROLE_ROOT + (8 * 1024))
+#define AKNANO_FLASH_OFF_TUF_ROLE_SNAPSHOT (AKNANO_FLASH_OFF_TUF_ROLE_TIMESTAMP + (8 * 1024))
+#define AKNANO_FLASH_OFF_TUF_ROLE_TARGETS (AKNANO_FLASH_OFF_TUF_ROLE_SNAPSHOT + (8 * 1024))
 
 #define AKNANO_FLASH_OFF_TUF_ROOT_PROVISIONING (64 * 1024)
 
 static int get_flash_offset_for_role(enum tuf_role role)
 {
-    switch(role) {
-        case ROLE_ROOT: return AKNANO_FLASH_OFF_TUF_ROLE_ROOT;
-        case ROLE_TIMESTAMP: return AKNANO_FLASH_OFF_TUF_ROLE_TIMESTAMP;
-        case ROLE_SNAPSHOT: return AKNANO_FLASH_OFF_TUF_ROLE_SNAPSHOT;
-        case ROLE_TARGETS: return AKNANO_FLASH_OFF_TUF_ROLE_TARGETS;
-        default: return -1;
+    switch (role) {
+    case ROLE_ROOT: return AKNANO_FLASH_OFF_TUF_ROLE_ROOT;
+    case ROLE_TIMESTAMP: return AKNANO_FLASH_OFF_TUF_ROLE_TIMESTAMP;
+    case ROLE_SNAPSHOT: return AKNANO_FLASH_OFF_TUF_ROLE_SNAPSHOT;
+    case ROLE_TARGETS: return AKNANO_FLASH_OFF_TUF_ROLE_TARGETS;
+    default: return -1;
     }
 }
 
-static int read_local_json_file(int initial_offset, unsigned char *target_buffer, size_t target_buffer_len, size_t *file_size) 
+static int read_local_json_file(int initial_offset, unsigned char *target_buffer, size_t target_buffer_len, size_t *file_size)
 {
     int ret;
 
@@ -46,15 +46,15 @@ static int read_local_json_file(int initial_offset, unsigned char *target_buffer
     if (target_buffer[0] != '{')
         return -1;
 
-    for (int i=0; i<target_buffer_len; i++) {
+    for (int i = 0; i < target_buffer_len; i++) {
         if (target_buffer[i] == 0xFF) {
             target_buffer[i] = 0;
             break;
         }
     }
 
-    target_buffer[target_buffer_len-1] = 0;
-    *file_size = strnlen((char*)target_buffer, target_buffer_len);
+    target_buffer[target_buffer_len - 1] = 0;
+    *file_size = strnlen((char *)target_buffer, target_buffer_len);
     return TUF_SUCCESS;
 }
 
@@ -73,16 +73,15 @@ int tuf_client_read_local_file(enum tuf_role role, unsigned char *target_buffer,
     if (ret < 0) {
         if (role == ROLE_ROOT) {
             ret = read_local_json_file(AKNANO_FLASH_OFF_TUF_ROOT_PROVISIONING, target_buffer, target_buffer_len, file_size);
-            if (ret == TUF_SUCCESS) {
+            if (ret == TUF_SUCCESS)
                 tuf_client_write_local_file(role, target_buffer, *file_size, application_context);
-            }
             return ret;
         }
         LogInfo((ANSI_COLOR_MAGENTA "tuf_client_read_local_file: role=%s file not found. buf[0]=%X" ANSI_COLOR_RESET, tuf_get_role_name(role), target_buffer[0]));
         return -1; // File not found / read error
     }
 
-    LogInfo((ANSI_COLOR_MAGENTA "tuf_client_read_local_file: role=%s file_size=%d strlen=%d OK" ANSI_COLOR_RESET, tuf_get_role_name(role), *file_size, strlen((const char*)target_buffer)));
+    LogInfo((ANSI_COLOR_MAGENTA "tuf_client_read_local_file: role=%s file_size=%d strlen=%d OK" ANSI_COLOR_RESET, tuf_get_role_name(role), *file_size, strlen((const char *)target_buffer)));
     return TUF_SUCCESS;
 }
 
@@ -106,12 +105,12 @@ int tuf_client_fetch_file(const char *file_base_name, unsigned char *target_buff
     BaseType_t ret;
 
     *file_size = 0;
-    snprintf((char*)aknano_context->url_buffer, sizeof(aknano_context->url_buffer), "/repo/%s", file_base_name);
+    snprintf((char *)aknano_context->url_buffer, sizeof(aknano_context->url_buffer), "/repo/%s", file_base_name);
     ret = AkNano_SendHttpRequest(
-            aknano_context->dg_network_context,
-            HTTP_METHOD_GET,
-            (char*)aknano_context->url_buffer, "", 0,
-            aknano_context->settings);
+        aknano_context->dg_network_context,
+        HTTP_METHOD_GET,
+        (char *)aknano_context->url_buffer, "", 0,
+        aknano_context->settings);
 
     if (ret == pdPASS) {
         LogInfo((ANSI_COLOR_MAGENTA "tuf_client_fetch_file: %s HTTP operation return code %d. Body length=%ld" ANSI_COLOR_RESET, file_base_name, aknano_context->dg_network_context->reply_http_code, aknano_context->dg_network_context->reply_body_len));
@@ -145,8 +144,8 @@ int aknano_provision_tuf_root(struct aknano_context *aknano_context)
         return TUF_SUCCESS;
     }
 
-	ret = tuf_client_fetch_file(root_file_name, tuf_data_buffer, sizeof(tuf_data_buffer), &file_size, aknano_context);
-	LogInfo(("aknano_provision_tuf_root: fetch_file  ret=%d file_size=%ld", root_file_name, ret, file_size));
+    ret = tuf_client_fetch_file(root_file_name, tuf_data_buffer, sizeof(tuf_data_buffer), &file_size, aknano_context);
+    LogInfo(("aknano_provision_tuf_root: fetch_file  ret=%d file_size=%ld", root_file_name, ret, file_size));
 
     if (ret == 0) {
         if (tuf_data_buffer[0] != '{' || file_size < 100)
@@ -155,7 +154,7 @@ int aknano_provision_tuf_root(struct aknano_context *aknano_context)
         // LogInfo(("write_local_file: role=%d initial_offset=%d len=%d", role, initial_offset, len));
         ret = WriteDataToFlash(AKNANO_FLASH_OFF_TUF_ROOT_PROVISIONING, tuf_data_buffer, file_size);
     }
-	return ret;
+    return ret;
 }
 #endif
 

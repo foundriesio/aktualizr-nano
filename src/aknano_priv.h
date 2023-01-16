@@ -152,8 +152,8 @@ enum aknano_response {
 
 
 struct aknano_target {
-    char updatedAt[AKNANO_MAX_UPDATE_AT_LENGTH];
-    size_t expected_size;
+    char    updatedAt[AKNANO_MAX_UPDATE_AT_LENGTH];
+    size_t  expected_size;
     int32_t version;
     uint8_t expected_hash[AKNANO_SHA256_LEN];
 };
@@ -165,8 +165,8 @@ struct aknano_target {
 // };
 
 struct aknano_download {
-    int download_status;
-    int download_progress;
+    int    download_status;
+    int    download_progress;
     size_t downloaded_size;
     size_t http_content_size;
 };
@@ -174,25 +174,25 @@ struct aknano_download {
 
 /* Settings are kept between iterations */
 struct aknano_settings {
-    char tag[AKNANO_MAX_TAG_LENGTH];
+    char        tag[AKNANO_MAX_TAG_LENGTH];
     // char device_priv_key[AKNANO_CERT_BUF_SIZE];
-    char device_name[AKNANO_MAX_DEVICE_NAME_SIZE];
-    char uuid[AKNANO_MAX_UUID_LENGTH];
-    char serial[AKNANO_MAX_SERIAL_LENGTH];
+    char        device_name[AKNANO_MAX_DEVICE_NAME_SIZE];
+    char        uuid[AKNANO_MAX_UUID_LENGTH];
+    char        serial[AKNANO_MAX_SERIAL_LENGTH];
     // char factory_name[AKNANO_MAX_FACTORY_NAME_LENGTH];
-    uint32_t running_version;
-    int last_applied_version;
-    int last_confirmed_version;
+    uint32_t    running_version;
+    int         last_applied_version;
+    int         last_confirmed_version;
     // char running_tag[AKNANO_MAX_TAG_LENGTH];
-    int polling_interval;
-    time_t boot_up_epoch;
-    char ongoing_update_correlation_id[AKNANO_MAX_UPDATE_CORRELATION_ID_LENGTH];
-    uint8_t image_position;
-    const char *	hwid;
+    int         polling_interval;
+    time_t      boot_up_epoch;
+    char        ongoing_update_correlation_id[AKNANO_MAX_UPDATE_CORRELATION_ID_LENGTH];
+    uint8_t     image_position;
+    const char *hwid;
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
-    char token[AKNANO_MAX_TOKEN_LENGTH];
-    char device_certificate[AKNANO_CERT_BUF_SIZE];
-    bool is_device_registered;
+    char        token[AKNANO_MAX_TOKEN_LENGTH];
+    char        device_certificate[AKNANO_CERT_BUF_SIZE];
+    bool        is_device_registered;
 #endif
 };
 
@@ -200,37 +200,37 @@ struct aknano_network_context;
 
 /* Context is not kept between iterations */
 struct aknano_context {
-    int sock;
-    int32_t action_id;
-    uint8_t response_data[RESPONSE_BUFFER_SIZE];
+    int                            sock;
+    int32_t                        action_id;
+    uint8_t                        response_data[RESPONSE_BUFFER_SIZE];
     // struct aknano_json_data aknano_json_data;
-    int32_t json_action_id;
-    size_t url_buffer_size;
-    size_t status_buffer_size;
-    struct aknano_download dl;
+    int32_t                        json_action_id;
+    size_t                         url_buffer_size;
+    size_t                         status_buffer_size;
+    struct aknano_download         dl;
     // struct http_request http_req;
     // struct flash_img_context flash_ctx;
-    uint8_t url_buffer[URL_BUFFER_SIZE];
-    uint8_t status_buffer[STATUS_BUFFER_SIZE];
-    uint8_t recv_buf_tcp[RECV_BUFFER_SIZE];
-    enum aknano_response code_status;
-    
-    int json_pasring_bracket_level;
-    struct aknano_settings *settings; /* TODO: may not always be set yet */
+    uint8_t                        url_buffer[URL_BUFFER_SIZE];
+    uint8_t                        status_buffer[STATUS_BUFFER_SIZE];
+    uint8_t                        recv_buf_tcp[RECV_BUFFER_SIZE];
+    enum aknano_response           code_status;
 
-    struct aknano_target selected_target;
+    int                            json_pasring_bracket_level;
+    struct aknano_settings *       settings; /* TODO: may not always be set yet */
+
+    struct aknano_target           selected_target;
 
     /* Connection to the device gateway */
     struct aknano_network_context *dg_network_context;
 
-    mbedtls_sha256_context sha256_context;
+    mbedtls_sha256_context         sha256_context;
 };
 
 
 /**
  * @brief The length of the HTTP GET method.
  */
-#define httpexampleHTTP_METHOD_GET_LENGTH                    ( sizeof( HTTP_METHOD_GET ) - 1 )
+#define httpexampleHTTP_METHOD_GET_LENGTH                    (sizeof(HTTP_METHOD_GET) - 1)
 
 /**
  * @brief Field name of the HTTP range header to read from server response.
@@ -240,7 +240,7 @@ struct aknano_context {
 /**
  * @brief Length of the HTTP range header field.
  */
-#define httpexampleHTTP_CONTENT_RANGE_HEADER_FIELD_LENGTH    ( sizeof( httpexampleHTTP_CONTENT_RANGE_HEADER_FIELD ) - 1 )
+#define httpexampleHTTP_CONTENT_RANGE_HEADER_FIELD_LENGTH    (sizeof(httpexampleHTTP_CONTENT_RANGE_HEADER_FIELD) - 1)
 
 /**
  * @brief The HTTP status code returned for partial content.
@@ -254,17 +254,17 @@ struct aknano_context {
 /**
  * @brief Number of milliseconds in a second.
  */
-#define NUM_MILLISECONDS_IN_SECOND                  ( 1000U )
+#define NUM_MILLISECONDS_IN_SECOND                  (1000U)
 
 /**
  * @brief Milliseconds per second.
  */
-#define MILLISECONDS_PER_SECOND                     ( 1000U )
+#define MILLISECONDS_PER_SECOND                     (1000U)
 
 /**
  * @brief Milliseconds per FreeRTOS tick.
  */
-#define MILLISECONDS_PER_TICK                       ( MILLISECONDS_PER_SECOND / configTICK_RATE_HZ )
+#define MILLISECONDS_PER_TICK                       (MILLISECONDS_PER_SECOND / configTICK_RATE_HZ)
 
 /**
  * @brief Each compilation unit that consumes the NetworkContext must define it.
@@ -274,26 +274,24 @@ struct aknano_context {
  *
  * @note Transport stacks are defined in amazon-freertos/libraries/abstractions/transport/secure_sockets/transport_secure_sockets.h.
  */
-struct NetworkContext
-{
-    SecureSocketsTransportParams_t * pParams;
+struct NetworkContext {
+    SecureSocketsTransportParams_t *pParams;
 };
 
-struct aknano_network_context
-{
+struct aknano_network_context {
     /* Platform specific fields */
-    TransportInterface_t xTransportInterface;
+    TransportInterface_t           xTransportInterface;
     /* The network context for the transport layer interface. */
-    NetworkContext_t xNetworkContext;
-    TransportSocketStatus_t xNetworkStatus;
+    NetworkContext_t               xNetworkContext;
+    TransportSocketStatus_t        xNetworkStatus;
     // BaseType_t xIsConnectionEstablished = pdFALSE;
     SecureSocketsTransportParams_t secureSocketsTransportParams;
-    HTTPResponse_t xResponse;
+    HTTPResponse_t                 xResponse;
 
     /* Platform independent fields */
-    const unsigned char *reply_body;
-    size_t reply_body_len;
-    int reply_http_code;
+    const unsigned char *          reply_body;
+    size_t                         reply_body_len;
+    int                            reply_http_code;
 };
 
 
@@ -305,62 +303,32 @@ status_t WriteDataToFlash(int offset, const void *data, size_t data_len);
 
 int init_network_context(struct aknano_network_context *network_context);
 
-BaseType_t aknano_mtls_connect(
-        struct aknano_network_context *network_context,
-        const char *hostname,
-        size_t hostname_len,
-        uint16_t port,
-        const char *server_root_ca,
-        size_t server_root_ca_len
-    );
+BaseType_t aknano_mtls_connect(struct aknano_network_context *network_context, const char *hostname, size_t hostname_len, uint16_t port, const char *server_root_ca, size_t server_root_ca_len);
 
-BaseType_t aknano_mtls_send_http_request(
-        struct aknano_network_context *network_context,
-        const char *hostname,
-        size_t hostname_len,
-        const char * pcMethod,
-        const char * pcPath,
-        const char * pcBody,
-        size_t xBodyLen,
-        unsigned char *buffer,
-        size_t buffer_len,
-        const char **header_keys,
-        const char **header_values,
-        size_t header_len
-);
+BaseType_t aknano_mtls_send_http_request(struct aknano_network_context *network_context, const char *hostname, size_t hostname_len, const char *pcMethod, const char *pcPath, const char *pcBody, size_t xBodyLen, unsigned char *buffer, size_t buffer_len, const char **header_keys, const char **header_values, size_t header_len);
 
 void aknano_mtls_disconnect(struct aknano_network_context *network_context);
 
 int AkNanoDownloadAndFlashImage(struct aknano_context *aknano_context);
 void AkNanoUpdateSettingsInFlash(struct aknano_settings *aknano_settings);
 long unsigned int AkNanoGetTime(void);
-bool AkNanoSendEvent(struct aknano_settings *aknano_settings,
-                     const char* event_type,
-                     int version, int success);
+bool AkNanoSendEvent(struct aknano_settings *aknano_settings, const char *event_type, int version, int success);
 
 int AkNanoPoll(struct aknano_context *aknano_context);
 
 void AkNanoInitSettings(struct aknano_settings *aknano_settings);
 
 
-extern uint8_t ucUserBuffer[ democonfigUSER_BUFFER_LENGTH ];
+extern uint8_t ucUserBuffer[democonfigUSER_BUFFER_LENGTH];
 BaseType_t AkNano_ConnectToDevicesGateway(struct aknano_network_context *network_context);
 
-BaseType_t AkNano_SendHttpRequest( struct aknano_network_context *network_context,
-                                      const char * pcMethod,
-                                      const char * pcPath,
-                                      const char * pcBody,
-                                      size_t xBodyLen,
-                                      struct aknano_settings *aknano_settings
-                                      );
+BaseType_t AkNano_SendHttpRequest(struct aknano_network_context *network_context, const char *pcMethod, const char *pcPath, const char *pcBody, size_t xBodyLen, struct aknano_settings *aknano_settings);
 
 int aknano_gen_serial_and_uuid(char *uuid_string, char *serial_string);
 
-void aknano_handle_manifest_data(struct aknano_context *context,
-                                 uint8_t *dst, off_t *offset, 
-                                 uint8_t *src, size_t len);
+void aknano_handle_manifest_data(struct aknano_context *context, uint8_t *dst, off_t *offset, uint8_t *src, size_t len);
 
-void aknano_get_ipv4_and_mac(char* ipv4, uint8_t* mac);
+void aknano_get_ipv4_and_mac(char *ipv4, uint8_t *mac);
 
 void aknano_dump_memory_info(const char *context);
 
@@ -370,11 +338,11 @@ bool AkNanoRegisterDevice(struct aknano_settings *aknano_settings);
 #endif
 
 #if defined(AKNANO_ENABLE_EXPLICIT_REGISTRATION) || defined(AKNANO_ALLOW_PROVISIONING)
-CK_RV aknano_read_device_certificate(char* dst, size_t dst_size);
+CK_RV aknano_read_device_certificate(char *dst, size_t dst_size);
 #endif
 
 #ifdef AKNANO_RESET_DEVICE_ID
-CK_RV prvDestroyDefaultCryptoObjects( void );
+CK_RV prvDestroyDefaultCryptoObjects(void);
 #endif
 
 #ifdef AKNANO_ALLOW_PROVISIONING

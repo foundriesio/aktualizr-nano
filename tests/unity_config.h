@@ -265,19 +265,19 @@
 
 /* Redirect output to print task. */
 #ifndef UNITY_OUTPUT_CHAR
-    #define UNITY_OUTPUT_CHAR( a )     TEST_CacheResult( a )
+#define UNITY_OUTPUT_CHAR(a)     TEST_CacheResult(a)
 #endif
 #ifndef UNITY_OUTPUT_FLUSH
-    #define UNITY_OUTPUT_FLUSH()       TEST_SubmitResultBuffer()
+#define UNITY_OUTPUT_FLUSH()       TEST_SubmitResultBuffer()
 #endif
 #ifndef UNITY_OUTPUT_START
-    #define UNITY_OUTPUT_START()       TEST_NotifyTestStart()
+#define UNITY_OUTPUT_START()       TEST_NotifyTestStart()
 #endif
 #ifndef UNITY_OUTPUT_COMPLETE
-    #define UNITY_OUTPUT_COMPLETE()    TEST_NotifyTestFinished()
+#define UNITY_OUTPUT_COMPLETE()    TEST_NotifyTestFinished()
 #endif
 
-#define UNITY_OUTPUT_CHAR_HEADER_DECLARATION TEST_CacheResult( char )
+#define UNITY_OUTPUT_CHAR_HEADER_DECLARATION TEST_CacheResult(char)
 #define UNITY_OUTPUT_COLOR
 
 #endif /* UNITY_CONFIG_H */

@@ -11,9 +11,7 @@
 #include "aknano_provisioning_secret.h"
 #include "aknano_priv.h"
 
-int aknano_gen_device_certificate_and_key(
-					const char* uuid, const char* factory_name, 
-					const char* serial_string, unsigned char* cert_buf, unsigned char* key_buf);
+int aknano_gen_device_certificate_and_key(const char *uuid, const char *factory_name, const char *serial_string, unsigned char *cert_buf, unsigned char *key_buf);
 
 #ifndef AKNANO_ENABLE_EL2GO
 static unsigned char cert_buf[AKNANO_CERT_BUF_SIZE];
@@ -31,32 +29,32 @@ int aknano_clear_provisioned_data()
     int offset;
 
     LogInfo(("Clearing provisioned device data from flash"));
-    for (offset = 0; offset < AKNANO_FLASH_SECTORS_COUNT * FLASH_SECTOR_SIZE; offset += FLASH_SECTOR_SIZE) {
+    for (offset = 0; offset < AKNANO_FLASH_SECTORS_COUNT * FLASH_SECTOR_SIZE; offset += FLASH_SECTOR_SIZE)
         ClearFlashSector(offset);
-    }
     return 0;
 }
 
 int aknano_provision_device()
 {
-    /* 
-     * When EdgeLock 2GO is used, this function only generates the device serial 
+    /*
+     * When EdgeLock 2GO is used, this function only generates the device serial
      *  and UUID
      */
 
     int ret = 0;
+
 #ifndef AKNANO_ENABLE_EL2GO
     int offset;
 #endif
     char uuid_and_serial[FLASH_PAGE_SIZE];
 
-    aknano_gen_serial_and_uuid(uuid_and_serial, uuid_and_serial+128);
+    aknano_gen_serial_and_uuid(uuid_and_serial, uuid_and_serial + 128);
     LogInfo(("uuid=%s", uuid_and_serial));
-    LogInfo(("serial=%s", uuid_and_serial+128));
+    LogInfo(("serial=%s", uuid_and_serial + 128));
 
 #ifndef AKNANO_ENABLE_EL2GO
-    ret = aknano_gen_device_certificate_and_key(uuid_and_serial, AKNANO_FACTORY_NAME, 
-                                          uuid_and_serial+128, cert_buf, key_buf);
+    ret = aknano_gen_device_certificate_and_key(uuid_and_serial, AKNANO_FACTORY_NAME,
+                                                uuid_and_serial + 128, cert_buf, key_buf);
     LogInfo(("aknano_gen_random_device_certificate_and_key ret=%d", ret));
     LogInfo(("cert_buf:\r\n%s", cert_buf));
     LogInfo(("key_buf:\r\n%s", key_buf));
@@ -115,13 +113,13 @@ int aknano_provision_device()
     // LogInfo(("AFTER serial=%s", temp_buf));
 
 #ifndef AKNANO_ENABLE_EL2GO
-    #ifdef AKNANO_ENABLE_SE05X
+#ifdef AKNANO_ENABLE_SE05X
     LogInfo(("Provisioning Key and Certificate using PKCS#11 interface. Using SE05X"));
-    #else
+#else
     LogInfo(("Provisioning Key and Certificate using PKCS#11 interface. Using flash device"));
-    #endif
-    vDevModeKeyProvisioning_AkNano((uint8_t*)key_buf,
-                                (uint8_t*)cert_buf );
+#endif
+    vDevModeKeyProvisioning_AkNano((uint8_t *)key_buf,
+                                   (uint8_t *)cert_buf);
     LogInfo(("Provisioning done"));
 #endif
     return ret;

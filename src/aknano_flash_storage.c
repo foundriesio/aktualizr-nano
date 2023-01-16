@@ -18,8 +18,8 @@
 status_t InitFlashStorage()
 {
     int mflash_result = mflash_drv_init();
-    if (mflash_result != 0)
-    {
+
+    if (mflash_result != 0) {
         LogError(("mflash_drv_init error %d", mflash_result));
         return -1;
     }
@@ -29,8 +29,8 @@ status_t InitFlashStorage()
 status_t ReadFlashStorage(int offset, void *output, size_t outputMaxLen)
 {
     int mflash_result = mflash_drv_read(AKNANO_STORAGE_FLASH_OFFSET + offset, output, outputMaxLen / 4 * 4);
-    if (mflash_result != 0)
-    {
+
+    if (mflash_result != 0) {
         LogError(("ReadFlashStorage: mflash_drv_read error %d", mflash_result));
         return -1;
     }
@@ -41,15 +41,14 @@ status_t ReadFlashStorage(int offset, void *output, size_t outputMaxLen)
 status_t UpdateFlashStoragePage(int offset, void *data)
 {
     int mflash_result = mflash_drv_sector_erase(AKNANO_STORAGE_FLASH_OFFSET + offset);
-    if (mflash_result != 0)
-    {
+
+    if (mflash_result != 0) {
         LogError(("UpdateFlashStoragePage: mflash_drv_sector_erase error %d", mflash_result));
         return -1;
     }
 
     mflash_result = mflash_drv_page_program(AKNANO_STORAGE_FLASH_OFFSET + offset, data);
-    if (mflash_result != 0)
-    {
+    if (mflash_result != 0) {
         LogError(("UpdateFlashStoragePage: mflash_drv_page_program error %d", mflash_result));
         return -1;
     }
@@ -69,19 +68,17 @@ status_t WriteDataToFlash(int offset, const void *data, size_t data_len)
     int32_t next_erase_addr = offset;
     status_t ret = 0;
 
-    do
-    {
+    do{
         /* The data is epxected for be received by page sized chunks (except for the last one) */
-        int remaining_bytes =  data_len - total_processed;
+        int remaining_bytes = data_len - total_processed;
         if (remaining_bytes < MFLASH_PAGE_SIZE)
             chunk_len = remaining_bytes;
         else
             chunk_len = MFLASH_PAGE_SIZE;
-        
+
         memcpy(page_buffer, data + total_processed, chunk_len);
 
-        if (chunk_len > 0)
-        {
+        if (chunk_len > 0) {
             // if (chunk_flash_addr >= partition_phys_addr + partition_size)
             // {
             //     /* Partition boundary exceeded */
@@ -91,11 +88,9 @@ status_t WriteDataToFlash(int offset, const void *data, size_t data_len)
             // }
 
             /* Perform erase when encountering next sector */
-            if (chunk_flash_addr >= next_erase_addr)
-            {
+            if (chunk_flash_addr >= next_erase_addr) {
                 mflash_result = mflash_drv_sector_erase(AKNANO_STORAGE_FLASH_OFFSET + next_erase_addr);
-                if (mflash_result != 0)
-                {
+                if (mflash_result != 0) {
                     LogError(("store_update_image: Error erasing sector %ld", mflash_result));
                     ret = -2;
                     break;
@@ -105,14 +100,11 @@ status_t WriteDataToFlash(int offset, const void *data, size_t data_len)
 
             /* Clear the unused portion of the buffer (applicable to the last chunk) */
             if (chunk_len < MFLASH_PAGE_SIZE)
-            {
                 memset((uint8_t *)page_buffer + chunk_len, 0xFF, MFLASH_PAGE_SIZE - chunk_len);
-            }
 
             /* Program the page */
-            mflash_result = mflash_drv_page_program(AKNANO_STORAGE_FLASH_OFFSET + chunk_flash_addr, (uint32_t*)page_buffer);
-            if (mflash_result != 0)
-            {
+            mflash_result = mflash_drv_page_program(AKNANO_STORAGE_FLASH_OFFSET + chunk_flash_addr, (uint32_t *)page_buffer);
+            if (mflash_result != 0) {
                 LogError(("store_update_image: Error storing page %ld", mflash_result));
                 ret = -1;
                 break;
@@ -123,9 +115,8 @@ status_t WriteDataToFlash(int offset, const void *data, size_t data_len)
 
             // LogInfo(("store_update_image: processed %i bytes", total_processed));
         }
-
     } while (chunk_len == MFLASH_PAGE_SIZE);
-    
+
     return ret;
 }
 
@@ -135,9 +126,7 @@ status_t ClearFlashSector(int offset)
     int mflash_result = mflash_drv_sector_erase(AKNANO_STORAGE_FLASH_OFFSET + offset);
 
     if (mflash_result != 0)
-    {
         LogError(("EraseSector error %d", mflash_result));
-    }
 
     return 0;
 }
@@ -145,10 +134,9 @@ status_t ClearFlashSector(int offset)
 status_t WriteFlashPage(int offset, void *data)
 {
     int mflash_result = mflash_drv_page_program(AKNANO_STORAGE_FLASH_OFFSET + offset, data);
+
     if (mflash_result != 0)
-    {
         LogError(("WriteFlashPage error %d", mflash_result));
-    }
     return 0;
 }
 

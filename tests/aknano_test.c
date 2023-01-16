@@ -1,4 +1,3 @@
-
 #include "unity.h"
 #include "unity_fixture.h"
 
@@ -19,67 +18,62 @@
 /**
  * @brief Test group definition.
  */
-TEST_GROUP( Full_AKNano );
+TEST_GROUP(Full_AKNano);
 
-TEST_SETUP( Full_AKNano )
-{
+TEST_SETUP(Full_AKNano){
 }
 
-TEST_TEAR_DOWN( Full_AKNano )
-{
+TEST_TEAR_DOWN(Full_AKNano){
 }
 
-TEST_GROUP_RUNNER( Full_AKNano )
-{
-    RUN_TEST_CASE( Full_AKNano, akNano_TestFlashAccess );
-    RUN_TEST_CASE( Full_AKNano, akNano_TestDeviceGatewayAccess );
+TEST_GROUP_RUNNER(Full_AKNano){
+    RUN_TEST_CASE(Full_AKNano, akNano_TestFlashAccess);
+    RUN_TEST_CASE(Full_AKNano, akNano_TestDeviceGatewayAccess);
 }
 
-TEST( Full_AKNano, akNano_TestFlashAccess )
-{
+TEST(Full_AKNano, akNano_TestFlashAccess){
     uint8_t original_data[128];
     uint8_t new_data[128];
     uint8_t i;
     status_t ret;
 
     ret = ReadFlashStorage(AKNANO_FLASH_OFF_STATE_BASE,
-                     original_data,
-                     sizeof(original_data));
+                           original_data,
+                           sizeof(original_data));
 
     TEST_ASSERT(ret == kStatus_Success);
 
-    for (i=0; i< sizeof(new_data); i++)
+    for (i = 0; i < sizeof(new_data); i++)
         new_data[i] = i;
 
     ret = UpdateFlashStoragePage(AKNANO_FLASH_OFF_STATE_BASE,
-                     new_data);
+                                 new_data);
 
     TEST_ASSERT(ret == kStatus_Success);
     ret = ReadFlashStorage(AKNANO_FLASH_OFF_STATE_BASE,
-                     new_data, sizeof(new_data));
+                           new_data, sizeof(new_data));
 
     TEST_ASSERT(ret == kStatus_Success);
 
-    for (i=0; i< sizeof(new_data); i++)
+    for (i = 0; i < sizeof(new_data); i++)
         TEST_ASSERT(new_data[i] == i);
 
     ret = UpdateFlashStoragePage(AKNANO_FLASH_OFF_STATE_BASE,
-                     original_data);
+                                 original_data);
 
     TEST_ASSERT(ret == kStatus_Success);
 
     ret = ReadFlashStorage(AKNANO_FLASH_OFF_STATE_BASE,
-                     new_data, sizeof(new_data));
+                           new_data, sizeof(new_data));
 
     TEST_ASSERT(ret == kStatus_Success);
 
     TEST_ASSERT(ret == kStatus_Success);
-    for (i=0; i< sizeof(new_data); i++)
+    for (i = 0; i < sizeof(new_data); i++)
         TEST_ASSERT(new_data[i] == original_data[i]);
 }
 
-TEST( Full_AKNano, akNano_TestDeviceGatewayAccess )
-{
+TEST(Full_AKNano, akNano_TestDeviceGatewayAccess){
     struct aknano_network_context network_context;
     BaseType_t xDemoStatus = pdPASS;
 
@@ -93,7 +87,7 @@ TEST( Full_AKNano, akNano_TestDeviceGatewayAccess )
     aknano_mtls_disconnect(&network_context);
 }
 
-int RunAkNanoTest( void )
+int RunAkNanoTest(void)
 {
     int status = -1;
 
@@ -107,7 +101,7 @@ int RunAkNanoTest( void )
     UNITY_BEGIN();
 
     /* Run the test group. */
-    RUN_TEST_GROUP( Full_AKNano );
+    RUN_TEST_GROUP(Full_AKNano);
 
     status = UNITY_END();
     return status;
