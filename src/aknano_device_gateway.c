@@ -388,8 +388,7 @@ bool AkNanoSendEvent(struct aknano_settings *aknano_settings,
     return TRUE;
 }
 
-#define TUF_DATA_BUFFER_LEN 10 * 1024
-static unsigned char tuf_data_buffer[TUF_DATA_BUFFER_LEN];
+unsigned char tuf_data_buffer[TUF_DATA_BUFFER_LEN];
 int parse_targets_metadata(const char *data, int len, void *application_context);
 
 int AkNanoPoll(struct aknano_context *aknano_context)
@@ -400,6 +399,10 @@ int AkNanoPoll(struct aknano_context *aknano_context)
     bool isRebootRequired = false;
     // off_t offset = 0;
     struct aknano_settings *aknano_settings = aknano_context->settings;
+    int tuf_ret = 0;
+#ifdef AKNANO_ALLOW_PROVISIONING
+    static bool tuf_root_is_provisioned = false;
+#endif
 
     LogInfo(("AkNanoPoll. Version=%lu  Tag=%s", aknano_settings->running_version, aknano_settings->tag));
 
@@ -425,8 +428,17 @@ int AkNanoPoll(struct aknano_context *aknano_context)
         reference_time += 31536000; // Add 1 year
 #endif
         aknano_context->dg_network_context = &network_context;
-        int tuf_ret = tuf_refresh(aknano_context, reference_time, tuf_data_buffer, sizeof(tuf_data_buffer)); /* TODO: Get epoch from system clock */
-        LogInfo((ANSI_COLOR_MAGENTA "tuf_refresh %s (%d)" ANSI_COLOR_RESET, tuf_get_error_string(tuf_ret), tuf_ret));
+
+#ifdef AKNANO_ALLOW_PROVISIONING
+        if (!tuf_root_is_provisioned) {
+            tuf_ret = aknano_provision_tuf_root(aknano_context);
+            tuf_root_is_provisioned = (tuf_ret == 0);
+        }
+#endif
+        if (tuf_ret == 0) {
+            tuf_ret = tuf_refresh(aknano_context, reference_time, tuf_data_buffer, sizeof(tuf_data_buffer)); /* TODO: Get epoch from system clock */
+            LogInfo((ANSI_COLOR_MAGENTA "tuf_refresh %s (%d)" ANSI_COLOR_RESET, tuf_get_error_string(tuf_ret), tuf_ret));
+        }
 
         if (tuf_ret == 0) {
             parse_targets_metadata((const char*)tuf_data_buffer, strlen((char*)tuf_data_buffer), aknano_context);

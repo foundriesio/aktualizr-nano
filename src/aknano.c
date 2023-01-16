@@ -395,6 +395,11 @@ static void AkNanoInit(struct aknano_settings *aknano_settings)
     }
 #endif
 
+#ifdef AKNANO_DELETE_PROVISIONED_TUF_ROOT
+    LogWarn((ANSI_COLOR_RED "**** Reseting factory TUF 1.root.json ****" ANSI_COLOR_RESET));
+    aknano_clear_provisioned_tuf_root();
+#endif
+
 #ifdef AKNANO_DELETE_TUF_DATA
     LogWarn((ANSI_COLOR_RED "**** Reseting TUF data ****" ANSI_COLOR_RESET));
     #include "libtufnano.h"

@@ -136,6 +136,9 @@
 #endif
 #endif
 
+#define TUF_DATA_BUFFER_LEN 10 * 1024
+extern unsigned char tuf_data_buffer[TUF_DATA_BUFFER_LEN];
+
 enum aknano_response {
     AKNANO_NETWORKING_ERROR,
     AKNANO_UNCONFIRMED_IMAGE,
@@ -383,5 +386,11 @@ int aknano_provision_device();
 #endif
 
 bool is_valid_certificate_available(bool);
+
+int aknano_provision_tuf_root(struct aknano_context *aknano_context);
+
+#ifdef AKNANO_DELETE_PROVISIONED_TUF_ROOT
+int aknano_clear_provisioned_tuf_root();
+#endif
 
 #endif /* __AKNANO_PRIV_H__ */
