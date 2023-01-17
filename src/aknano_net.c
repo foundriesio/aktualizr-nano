@@ -127,7 +127,7 @@ BaseType_t aknano_mtls_send_http_request(
     (void)memset(&network_context->xResponse, 0, sizeof(network_context->xResponse));
     (void)memset(&xRequestHeaders, 0, sizeof(xRequestHeaders));
 
-    network_context->xResponse.getTime = AkNanoGetTime; //nondet_boot();// ? NULL : GetCurrentTimeStub;
+    network_context->xResponse.getTime = aknano_get_time; //nondet_boot();// ? NULL : GetCurrentTimeStub;
 
     /* Initialize the request object. */
     xRequestInfo.pHost = hostname;
@@ -205,7 +205,7 @@ void aknano_mtls_disconnect(struct aknano_network_context *network_context)
 
     xNetworkStatus = SecureSocketsTransport_Disconnect(&network_context->xNetworkContext);
     if (xNetworkStatus != TRANSPORT_SOCKET_STATUS_SUCCESS)
-        LogError(("AkNanoSendEvent Disconnection error: %d", xNetworkStatus));
+        LogError(("aknano_send_event Disconnection error: %d", xNetworkStatus));
 }
 
 extern struct netif netif;

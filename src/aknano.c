@@ -43,7 +43,7 @@ static struct aknano_settings xaknano_settings;
 static struct aknano_context xaknano_context;
 
 
-long unsigned int AkNanoGetTime(void)
+long unsigned int aknano_get_time(void)
 {
     static long unsigned int t;
 
@@ -60,7 +60,7 @@ void aknano_dump_memory_info(const char *context)
 }
 #endif
 
-void AkNanoUpdateSettingsInFlash(struct aknano_settings *aknano_settings)
+void aknano_update_settings_in_flash(struct aknano_settings *aknano_settings)
 {
     char flashPageBuffer[256];
 
@@ -78,10 +78,10 @@ void AkNanoUpdateSettingsInFlash(struct aknano_settings *aknano_settings)
              flashPageBuffer[0], flashPageBuffer[1], flashPageBuffer[2], flashPageBuffer[3],
              flashPageBuffer[4], flashPageBuffer[5], flashPageBuffer[6], flashPageBuffer[7],
              flashPageBuffer[8], flashPageBuffer[9], flashPageBuffer[10], flashPageBuffer[11]));
-    UpdateFlashStoragePage(AKNANO_FLASH_OFF_STATE_BASE, flashPageBuffer);
+    aknano_update_flash_storage(AKNANO_FLASH_OFF_STATE_BASE, flashPageBuffer);
 }
 
-void AkNanoInitSettings(struct aknano_settings *aknano_settings)
+void aknano_init_settings(struct aknano_settings *aknano_settings)
 {
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
     uint32_t temp_value;
@@ -99,44 +99,44 @@ void AkNanoInitSettings(struct aknano_settings *aknano_settings)
 #endif
     aknano_settings->image_position = get_active_image() + 1;
 
-    LogInfo(("AkNanoInitSettings: image_position=%u", aknano_settings->image_position));
+    LogInfo(("aknano_init_settings: image_position=%u", aknano_settings->image_position));
 
     bl_get_image_build_num(&aknano_settings->running_version, aknano_settings->image_position);
-    LogInfo(("AkNanoInitSettings: aknano_settings->running_version=%lu",
+    LogInfo(("aknano_init_settings: aknano_settings->running_version=%lu",
              aknano_settings->running_version));
 
-    ReadFlashStorage(AKNANO_FLASH_OFF_DEV_SERIAL, aknano_settings->serial,
+    aknano_read_flash_storage(AKNANO_FLASH_OFF_DEV_SERIAL, aknano_settings->serial,
                      sizeof(aknano_settings->serial));
     if (aknano_settings->serial[0] == 0xff)
         aknano_settings->serial[0] = 0;
-    LogInfo(("AkNanoInitSettings: serial=%s", aknano_settings->serial));
+    LogInfo(("aknano_init_settings: serial=%s", aknano_settings->serial));
 
-    ReadFlashStorage(AKNANO_FLASH_OFF_DEV_UUID, aknano_settings->uuid,
+    aknano_read_flash_storage(AKNANO_FLASH_OFF_DEV_UUID, aknano_settings->uuid,
                      sizeof(aknano_settings->uuid));
     if (aknano_settings->uuid[0] == 0xff)
         aknano_settings->uuid[0] = 0;
-    LogInfo(("AkNanoInitSettings: uuid=%s", aknano_settings->uuid));
+    LogInfo(("aknano_init_settings: uuid=%s", aknano_settings->uuid));
 
-    ReadFlashStorage(AKNANO_FLASH_OFF_LAST_APPLIED_VERSION,
+    aknano_read_flash_storage(AKNANO_FLASH_OFF_LAST_APPLIED_VERSION,
                      &aknano_settings->last_applied_version,
                      sizeof(aknano_settings->last_applied_version));
     if (aknano_settings->last_applied_version < 0 || aknano_settings->last_applied_version > 999999999)
         aknano_settings->last_applied_version = 0;
-    LogInfo(("AkNanoInitSettings: last_applied_version=%d", aknano_settings->last_applied_version));
+    LogInfo(("aknano_init_settings: last_applied_version=%d", aknano_settings->last_applied_version));
 
-    ReadFlashStorage(AKNANO_FLASH_OFF_LAST_CONFIRMED_VERSION, &aknano_settings->last_confirmed_version,
+    aknano_read_flash_storage(AKNANO_FLASH_OFF_LAST_CONFIRMED_VERSION, &aknano_settings->last_confirmed_version,
                      sizeof(aknano_settings->last_confirmed_version));
     if (aknano_settings->last_confirmed_version < 0 || aknano_settings->last_confirmed_version > 999999999)
         aknano_settings->last_confirmed_version = 0;
-    LogInfo(("AkNanoInitSettings: last_confirmed_version=%d",
+    LogInfo(("aknano_init_settings: last_confirmed_version=%d",
              aknano_settings->last_confirmed_version));
 
-    ReadFlashStorage(AKNANO_FLASH_OFF_ONGOING_UPDATE_COR_ID,
+    aknano_read_flash_storage(AKNANO_FLASH_OFF_ONGOING_UPDATE_COR_ID,
                      &aknano_settings->ongoing_update_correlation_id,
                      sizeof(aknano_settings->ongoing_update_correlation_id));
     if (aknano_settings->ongoing_update_correlation_id[0] == 0xFF)
         aknano_settings->ongoing_update_correlation_id[0] = 0;
-    LogInfo(("AkNanoInitSettings: ongoing_update_correlation_id=%s",
+    LogInfo(("aknano_init_settings: ongoing_update_correlation_id=%s",
              aknano_settings->ongoing_update_correlation_id));
 
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
@@ -144,7 +144,7 @@ void AkNanoInitSettings(struct aknano_settings *aknano_settings)
                      &temp_value,
                      sizeof(temp_value));
     aknano_settings->is_device_registered = (temp_value & 0xFF) == 1;
-    LogInfo(("AkNanoInitSettings:  is_device_registered=%d",
+    LogInfo(("aknano_init_settings:  is_device_registered=%d",
              aknano_settings->is_device_registered));
 #endif
 
@@ -152,7 +152,7 @@ void AkNanoInitSettings(struct aknano_settings *aknano_settings)
              "%s-%s",
              CONFIG_BOARD, aknano_settings->serial);
 
-    LogInfo(("AkNanoInitSettings: device_name=%s",
+    LogInfo(("aknano_init_settings: device_name=%s",
              aknano_settings->device_name));
 
     aknano_settings->hwid = CONFIG_BOARD;
@@ -195,14 +195,14 @@ static int aknano_handle_img_confirmed(struct aknano_settings *aknano_settings)
         && aknano_settings->last_applied_version != aknano_settings->running_version
         && strnlen(aknano_settings->ongoing_update_correlation_id, AKNANO_MAX_UPDATE_CORRELATION_ID_LENGTH) > 0) {
         LogInfo(("A rollback was done"));
-        AkNanoSendEvent(aknano_settings,
+        aknano_send_event(aknano_settings,
                         AKNANO_EVENT_INSTALLATION_COMPLETED,
                         -1, AKNANO_EVENT_SUCCESS_FALSE);
         //aknano_write_to_nvs(AKNANO_NVS_ID_ONGOING_UPDATE_COR_ID, "", 0);
 
         memset(aknano_settings->ongoing_update_correlation_id, 0,
                sizeof(aknano_settings->ongoing_update_correlation_id));
-        AkNanoUpdateSettingsInFlash(aknano_settings);
+        aknano_update_settings_in_flash(aknano_settings);
     }
 
     if (!image_ok) {
@@ -217,7 +217,7 @@ static int aknano_handle_img_confirmed(struct aknano_settings *aknano_settings)
         // image_ok = boot_is_img_confirmed();
         // LogInfo(("after Image is%s confirmed OK", image_ok ? "" : " not"));
 
-        AkNanoSendEvent(aknano_settings, AKNANO_EVENT_INSTALLATION_COMPLETED, 0, AKNANO_EVENT_SUCCESS_TRUE);
+        aknano_send_event(aknano_settings, AKNANO_EVENT_INSTALLATION_COMPLETED, 0, AKNANO_EVENT_SUCCESS_TRUE);
 
         // aknano_write_to_nvs(AKNANO_NVS_ID_ONGOING_UPDATE_COR_ID, "", 0);
         // aknano_write_to_nvs(AKNANO_NVS_ID_LAST_CONFIRMED_VERSION, &aknano_settings.running_version, sizeof(aknano_settings.running_version));
@@ -227,7 +227,7 @@ static int aknano_handle_img_confirmed(struct aknano_settings *aknano_settings)
                sizeof(aknano_settings->ongoing_update_correlation_id));
         aknano_settings->last_applied_version = 0;
         aknano_settings->last_confirmed_version = aknano_settings->running_version;
-        AkNanoUpdateSettingsInFlash(aknano_settings);
+        aknano_update_settings_in_flash(aknano_settings);
 
         // aknano_write_to_nvs(AKNANO_NVS_ID_LAST_CONFIRMED_TAG, aknano_settings.tag, sizeof(aknano_settings.tag));
 
@@ -254,17 +254,17 @@ static int aknano_handle_img_confirmed(struct aknano_settings *aknano_settings)
 
     if (aknano_settings->last_confirmed_version != aknano_settings->running_version) {
         // TODO: Should not be required, but doing it here because of temp/permanent bug. May not be required anymore
-        AkNanoSendEvent(aknano_settings, AKNANO_EVENT_INSTALLATION_COMPLETED, 0, AKNANO_EVENT_SUCCESS_TRUE);
+        aknano_send_event(aknano_settings, AKNANO_EVENT_INSTALLATION_COMPLETED, 0, AKNANO_EVENT_SUCCESS_TRUE);
         memset(aknano_settings->ongoing_update_correlation_id, 0,
                sizeof(aknano_settings->ongoing_update_correlation_id));
         aknano_settings->last_applied_version = 0;
         aknano_settings->last_confirmed_version = aknano_settings->running_version;
-        AkNanoUpdateSettingsInFlash(aknano_settings);
+        aknano_update_settings_in_flash(aknano_settings);
 
         LogInfo(("Updating aknano_settings->running_version in flash (%d -> %lu)",
                  aknano_settings->last_confirmed_version, aknano_settings->running_version));
         aknano_settings->last_confirmed_version = aknano_settings->running_version;
-        AkNanoUpdateSettingsInFlash(aknano_settings);
+        aknano_update_settings_in_flash(aknano_settings);
     }
 
     return 0;
@@ -313,10 +313,10 @@ bool is_device_serial_set()
     char serial[AKNANO_MAX_SERIAL_LENGTH];
     bool is_serial_set;
 
-    ReadFlashStorage(AKNANO_FLASH_OFF_DEV_SERIAL, serial, sizeof(serial));
+    aknano_read_flash_storage(AKNANO_FLASH_OFF_DEV_SERIAL, serial, sizeof(serial));
     if (serial[0] == 0xff)
         serial[0] = 0;
-    LogInfo(("AkNanoInitSettings: serial=%s", serial));
+    LogInfo(("aknano_init_settings: serial=%s", serial));
     is_serial_set = strnlen(serial, sizeof(serial)) > 5;
     LogInfo(("Device serial set? %s", is_serial_set? "YES": "NO"));
     return is_serial_set;
@@ -325,7 +325,7 @@ bool is_device_serial_set()
 extern bool el2go_agent_stopped;
 #endif
 
-static void AkNanoInit(struct aknano_settings *aknano_settings)
+static void aknano_init(struct aknano_settings *aknano_settings)
 {
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
     bool registrationOk;
@@ -378,17 +378,17 @@ static void AkNanoInit(struct aknano_settings *aknano_settings)
     LogInfo(("EL2GO provisioning succeeded. Proceeding"));
 #endif
     LogInfo(("Initializing settings..."));
-    AkNanoInitSettings(aknano_settings);
+    aknano_init_settings(aknano_settings);
 
     vTaskDelay(pdMS_TO_TICKS(100));
     aknano_handle_img_confirmed(aknano_settings);
 
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
     if (!xaknano_settings.is_device_registered) {
-        registrationOk = AkNanoRegisterDevice(&xaknano_settings);
+        registrationOk = aknano_register_device(&xaknano_settings);
         if (registrationOk) {
             xaknano_settings.is_device_registered = registrationOk;
-            AkNanoUpdateSettingsInFlash(&xaknano_settings);
+            aknano_update_settings_in_flash(&xaknano_settings);
         }
     }
 #endif
@@ -411,7 +411,7 @@ static void AkNanoInit(struct aknano_settings *aknano_settings)
 #endif
 }
 
-static void AkNanoInitContext(struct aknano_context * aknano_context,
+static void aknano_init_context(struct aknano_context * aknano_context,
                               struct aknano_settings *aknano_settings)
 {
     memset(aknano_context, 0, sizeof(*aknano_context));
@@ -420,9 +420,9 @@ static void AkNanoInitContext(struct aknano_context * aknano_context,
 
 
 /**
- * @brief Entry point of demo.
+ * @brief Entry point of aktualizr-nano
  */
-int RunAkNanoDemo(bool                         xAwsIotMqttMode,
+int start_aknano(bool                         xAwsIotMqttMode,
                   const char *                 pIdentifier,
                   void *                       pNetworkServerInfo,
                   void *                       pNetworkCredentialInfo,
@@ -437,13 +437,13 @@ int RunAkNanoDemo(bool                         xAwsIotMqttMode,
     (void)pxNetworkInterface;
 
 #ifdef AKNANO_TEST
-    LogInfo(("AKNano RunAkNanoDemoTest Begin"));
-    RunAkNanoTest();
-    LogInfo(("AKNano RunAkNanoDemoTest Done"));
+    LogInfo(("aknano_run_tests Begin"));
+    aknano_run_tests();
+    LogInfo(("aknano_run_tests Done"));
     vTaskDelay(pdMS_TO_TICKS(1000));
 #endif
 
-    LogInfo((ANSI_COLOR_YELLOW "AKNano RunAkNanoDemo mode '" AKNANO_PROVISIONING_MODE "'" ANSI_COLOR_RESET));
+    LogInfo((ANSI_COLOR_YELLOW "start_aknano mode '" AKNANO_PROVISIONING_MODE "'" ANSI_COLOR_RESET));
 #ifdef AKNANO_RESET_DEVICE_ID
     LogInfo((ANSI_COLOR_YELLOW "Reset of device provisioned data is enabled" ANSI_COLOR_RESET));
 #endif
@@ -451,13 +451,13 @@ int RunAkNanoDemo(bool                         xAwsIotMqttMode,
     LogInfo((ANSI_COLOR_YELLOW "Provisioning support is enabled" ANSI_COLOR_RESET));
 #endif
 
-    AkNanoInit(&xaknano_settings);
+    aknano_init(&xaknano_settings);
     while (true) {
 #ifdef AKNANO_DUMP_MEMORY_USAGE_INFO
         aknano_dump_memory_info("Before aknano poll");
 #endif
-        AkNanoInitContext(&xaknano_context, &xaknano_settings);
-        AkNanoPoll(&xaknano_context);
+        aknano_init_context(&xaknano_context, &xaknano_settings);
+        aknano_poll(&xaknano_context);
         sleepTime = xaknano_settings.polling_interval * 1000;
         if (sleepTime < 5000)
             sleepTime = 5000;

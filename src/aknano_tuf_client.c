@@ -39,7 +39,7 @@ static int read_local_json_file(int initial_offset, unsigned char *target_buffer
 {
     int ret;
 
-    ret = ReadFlashStorage(initial_offset, target_buffer, target_buffer_len);
+    ret = aknano_read_flash_storage(initial_offset, target_buffer, target_buffer_len);
     if (ret < 0)
         return ret;
 
@@ -93,7 +93,7 @@ int tuf_client_write_local_file(enum tuf_role role, const unsigned char *data, s
 
     initial_offset = get_flash_offset_for_role(role);
     // LogInfo(("write_local_file: role=%d initial_offset=%d len=%d", role, initial_offset, len));
-    ret = WriteDataToFlash(initial_offset, data, len);
+    ret = aknano_write_data_to_flash(initial_offset, data, len);
     LogInfo((ANSI_COLOR_MAGENTA "tuf_client_write_local_file: role=%s len=%d %s" ANSI_COLOR_RESET, tuf_get_role_name(role), len, ret? "ERROR" : "OK"));
 
     return ret;
@@ -106,7 +106,7 @@ int tuf_client_fetch_file(const char *file_base_name, unsigned char *target_buff
 
     *file_size = 0;
     snprintf((char *)aknano_context->url_buffer, sizeof(aknano_context->url_buffer), "/repo/%s", file_base_name);
-    ret = AkNano_SendHttpRequest(
+    ret = aknano_send_http_request(
         aknano_context->dg_network_context,
         HTTP_METHOD_GET,
         (char *)aknano_context->url_buffer, "", 0,
@@ -152,7 +152,7 @@ int aknano_provision_tuf_root(struct aknano_context *aknano_context)
             return -1;
 
         // LogInfo(("write_local_file: role=%d initial_offset=%d len=%d", role, initial_offset, len));
-        ret = WriteDataToFlash(AKNANO_FLASH_OFF_TUF_ROOT_PROVISIONING, tuf_data_buffer, file_size);
+        ret = aknano_write_data_to_flash(AKNANO_FLASH_OFF_TUF_ROOT_PROVISIONING, tuf_data_buffer, file_size);
     }
     return ret;
 }
@@ -161,6 +161,6 @@ int aknano_provision_tuf_root(struct aknano_context *aknano_context)
 #ifdef AKNANO_DELETE_PROVISIONED_TUF_ROOT
 int aknano_clear_provisioned_tuf_root()
 {
-    return WriteDataToFlash(AKNANO_FLASH_OFF_TUF_ROOT_PROVISIONING, "\xFF", 1);
+    return aknano_write_data_to_flash(AKNANO_FLASH_OFF_TUF_ROOT_PROVISIONING, "\xFF", 1);
 }
 #endif

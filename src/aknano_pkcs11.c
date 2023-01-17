@@ -158,8 +158,8 @@ CK_RV aknano_read_device_certificate(char *dst, size_t dst_size)
     uint32_t cert_size = 0;
     CK_RV ret = prvGetCertificate(pkcs11configLABEL_DEVICE_CERTIFICATE_FOR_TLS, &cert_data, &cert_size);
 
-    LogInfo(("AkNanoInitSettings: prvGetCertificate '" pkcs11configLABEL_DEVICE_CERTIFICATE_FOR_TLS "' ret=%d", ret));
-    LogInfo(("AkNanoInitSettings: prvGetCertificate cert_size=%d", cert_size));
+    LogInfo(("aknano_read_device_certificate '" pkcs11configLABEL_DEVICE_CERTIFICATE_FOR_TLS "' ret=%d", ret));
+    LogInfo(("aknano_read_device_certificate cert_size=%d", cert_size));
     if (ret == 0 && cert_size > 0) {
         // static char pem_buffer[2048];
         cert_data[cert_size] = 0;
@@ -169,10 +169,10 @@ CK_RV aknano_read_device_certificate(char *dst, size_t dst_size)
                                        cert_data, cert_size,
                                        (unsigned char *)dst, dst_size, &olen);
         if (ret == 0) {
-            LogInfo(("AkNanoInitSettings: prvGetCertificate pem cert size=%u", olen));
-            LogInfo(("AkNanoInitSettings: prvGetCertificate pem cert:\r\n%s", dst));
+            LogInfo(("aknano_read_device_certificate pem cert size=%u", olen));
+            LogInfo(("aknano_read_device_certificate pem cert:\r\n%s", dst));
         } else {
-            LogInfo(("AkNanoInitSettings: prvGetCertificate pem cert error ret=%d", ret));
+            LogInfo(("aknano_read_device_certificate pem cert error ret=%d", ret));
         }
     }
 

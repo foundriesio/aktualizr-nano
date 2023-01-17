@@ -200,7 +200,7 @@ int aknano_gen_serial_and_uuid(char *uuid_string, char *serial_string)
 {
     char serial_bytes[16];
 
-    AkNanoGenRandomBytes(serial_bytes, sizeof(serial_bytes));
+    aknano_gen_random_bytes(serial_bytes, sizeof(serial_bytes));
     btox(serial_string, serial_bytes, sizeof(serial_bytes) * 2);
     serial_string_to_uuid_string(serial_string, uuid_string);
     uuid_string[36] = '\0';
@@ -287,7 +287,7 @@ static bool fill_event_payload(char *payload,
     return true;
 }
 
-BaseType_t AkNano_ConnectToDevicesGateway(struct aknano_network_context *network_context)
+BaseType_t aknano_connect_to_device_gateway(struct aknano_network_context *network_context)
 {
     BaseType_t ret;
 
@@ -309,7 +309,7 @@ BaseType_t AkNano_ConnectToDevicesGateway(struct aknano_network_context *network
     return pdPASS;
 }
 
-BaseType_t AkNano_SendHttpRequest(struct aknano_network_context *network_context,
+BaseType_t aknano_send_http_request(struct aknano_network_context *network_context,
                                   const char *                   pcMethod,
                                   const char *                   pcPath,
                                   const char *                   pcBody,
@@ -345,7 +345,7 @@ BaseType_t AkNano_SendHttpRequest(struct aknano_network_context *network_context
 }
 
 
-bool AkNanoSendEvent(struct aknano_settings *aknano_settings,
+bool aknano_send_event(struct aknano_settings *aknano_settings,
                      const char *event_type,
                      int version, int success)
 {
@@ -360,7 +360,7 @@ bool AkNanoSendEvent(struct aknano_settings *aknano_settings,
 
     BaseType_t xDemoStatus = pdPASS;
 
-    xDemoStatus = AkNano_ConnectToDevicesGateway(&network_context);
+    xDemoStatus = aknano_connect_to_device_gateway(&network_context);
     if (xDemoStatus != pdPASS)
         return TRUE;
 
@@ -370,7 +370,7 @@ bool AkNanoSendEvent(struct aknano_settings *aknano_settings,
              event_type));
     LogInfo(("Event payload: %.80s (...)", bodyBuffer));
 
-    AkNano_SendHttpRequest(
+    aknano_send_http_request(
         &network_context,
         HTTP_METHOD_POST,
         "/events",
@@ -387,7 +387,7 @@ bool AkNanoSendEvent(struct aknano_settings *aknano_settings,
 unsigned char tuf_data_buffer[TUF_DATA_BUFFER_LEN];
 int parse_targets_metadata(const char *data, int len, void *application_context);
 
-int AkNanoPoll(struct aknano_context *aknano_context)
+int aknano_poll(struct aknano_context *aknano_context)
 {
     struct aknano_network_context network_context;
     BaseType_t xDemoStatus;
@@ -401,11 +401,11 @@ int AkNanoPoll(struct aknano_context *aknano_context)
     static bool tuf_root_is_provisioned = false;
 #endif
 
-    LogInfo(("AkNanoPoll. Version=%lu  Tag=%s", aknano_settings->running_version, aknano_settings->tag));
+    LogInfo(("aknano_poll. Version=%lu  Tag=%s", aknano_settings->running_version, aknano_settings->tag));
 
-    xDemoStatus = AkNano_ConnectToDevicesGateway(&network_context);
+    xDemoStatus = aknano_connect_to_device_gateway(&network_context);
     if (xDemoStatus == pdPASS) {
-        xDemoStatus = AkNano_SendHttpRequest(
+        xDemoStatus = aknano_send_http_request(
             &network_context,
             HTTP_METHOD_GET,
             "/config", "", 0,
@@ -472,12 +472,12 @@ int AkNanoPoll(struct aknano_context *aknano_context)
                  "}",
                  CONFIG_BOARD, aknano_settings->serial, CONFIG_BOARD);
 
-        AkNano_SendHttpRequest(&network_context, HTTP_METHOD_PUT,
+        aknano_send_http_request(&network_context, HTTP_METHOD_PUT,
                                "/system_info", bodyBuffer, strlen(bodyBuffer),
                                aknano_context->settings);
 
         fill_network_info(bodyBuffer, sizeof(bodyBuffer));
-        AkNano_SendHttpRequest(&network_context, HTTP_METHOD_PUT,
+        aknano_send_http_request(&network_context, HTTP_METHOD_PUT,
                                "/system_info/network", bodyBuffer, strlen(bodyBuffer),
                                aknano_context->settings);
 
@@ -492,7 +492,7 @@ int AkNanoPoll(struct aknano_context *aknano_context)
                 aknano_settings->polling_interval,
                 CONFIG_BOARD,
                 aknano_settings->tag);
-        AkNano_SendHttpRequest(&network_context, HTTP_METHOD_PUT,
+        aknano_send_http_request(&network_context, HTTP_METHOD_PUT,
                                "/system_info/config", bodyBuffer, strlen(bodyBuffer),
                                aknano_context->settings);
     }
@@ -514,19 +514,19 @@ int AkNanoPoll(struct aknano_context *aknano_context)
         //             aknano_settings.ongoing_update_correlation_id,
         //             AKNANO_MAX_UPDATE_CORRELATION_ID_LENGTH);
 
-        AkNanoSendEvent(aknano_context->settings, AKNANO_EVENT_DOWNLOAD_STARTED,
+        aknano_send_event(aknano_context->settings, AKNANO_EVENT_DOWNLOAD_STARTED,
                         aknano_context->selected_target.version,
                         AKNANO_EVENT_SUCCESS_UNDEFINED);
-        if (AkNanoDownloadAndFlashImage(aknano_context)) {
-            AkNanoSendEvent(aknano_context->settings, AKNANO_EVENT_DOWNLOAD_COMPLETED,
+        if (aknano_download_and_flash_image(aknano_context)) {
+            aknano_send_event(aknano_context->settings, AKNANO_EVENT_DOWNLOAD_COMPLETED,
                             aknano_context->selected_target.version,
                             AKNANO_EVENT_SUCCESS_TRUE);
-            AkNanoSendEvent(aknano_context->settings, AKNANO_EVENT_INSTALLATION_STARTED,
+            aknano_send_event(aknano_context->settings, AKNANO_EVENT_INSTALLATION_STARTED,
                             aknano_context->selected_target.version,
                             AKNANO_EVENT_SUCCESS_UNDEFINED);
 
             aknano_settings->last_applied_version = aknano_context->selected_target.version;
-            AkNanoSendEvent(aknano_context->settings, AKNANO_EVENT_INSTALLATION_APPLIED,
+            aknano_send_event(aknano_context->settings, AKNANO_EVENT_INSTALLATION_APPLIED,
                             aknano_context->selected_target.version,
                             AKNANO_EVENT_SUCCESS_TRUE);
 
@@ -538,12 +538,12 @@ int AkNanoPoll(struct aknano_context *aknano_context)
             else
                 isRebootRequired = true;
         } else {
-            AkNanoSendEvent(aknano_context->settings, AKNANO_EVENT_DOWNLOAD_COMPLETED,
+            aknano_send_event(aknano_context->settings, AKNANO_EVENT_DOWNLOAD_COMPLETED,
                             aknano_context->selected_target.version,
                             AKNANO_EVENT_SUCCESS_FALSE);
         }
 
-        AkNanoUpdateSettingsInFlash(aknano_settings);
+        aknano_update_settings_in_flash(aknano_settings);
 
         // TODO: Add download failed event
         // AkNanoSendEvent(aknano_context, AKNANO_EVENT_DOWNLOAD_COMPLETED, aknano_context->selected_target.version);
@@ -555,7 +555,7 @@ int AkNanoPoll(struct aknano_context *aknano_context)
         NVIC_SystemReset();
     }
 
-    // LogInfo(("AkNanoPoll END"));
+    // LogInfo(("aknano_poll END"));
 
     return 0;
 }

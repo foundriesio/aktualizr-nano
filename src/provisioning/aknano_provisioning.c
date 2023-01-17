@@ -30,7 +30,7 @@ int aknano_clear_provisioned_data()
 
     LogInfo(("Clearing provisioned device data from flash"));
     for (offset = 0; offset < AKNANO_FLASH_SECTORS_COUNT * FLASH_SECTOR_SIZE; offset += FLASH_SECTOR_SIZE)
-        ClearFlashSector(offset);
+        aknano_clear_flash_sector(offset);
     return 0;
 }
 
@@ -83,19 +83,19 @@ int aknano_provision_device()
     // Save Cert, Key, UUID and Serial to flash
     aknano_clear_provisioned_data();
 
-    WriteFlashPage(AKNANO_FLASH_OFF_DEV_UUID, uuid_and_serial);
+    aknano_write_flash_page(AKNANO_FLASH_OFF_DEV_UUID, uuid_and_serial);
 #ifndef AKNANO_ENABLE_EL2GO
     for (offset = 0; offset < AKNANO_CERT_BUF_SIZE; offset += FLASH_PAGE_SIZE)
-        WriteFlashPage(AKNANO_FLASH_OFF_DEV_CERTIFICATE + offset, cert_buf + offset);
+        aknano_write_flash_page(AKNANO_FLASH_OFF_DEV_CERTIFICATE + offset, cert_buf + offset);
 
     for (offset = 0; offset < AKNANO_CERT_BUF_SIZE; offset += FLASH_PAGE_SIZE)
-        WriteFlashPage(AKNANO_FLASH_OFF_DEV_KEY + offset, key_buf + offset);
+        aknano_write_flash_page(AKNANO_FLASH_OFF_DEV_KEY + offset, key_buf + offset);
 #endif
 
     // struct aknano_settings settings = { 0 };
     // Clear execution settings area of the flash
     char flashPageBuffer[256] = { 0 };
-    UpdateFlashStoragePage(AKNANO_FLASH_OFF_STATE_BASE, flashPageBuffer);
+    aknano_update_flash_storage(AKNANO_FLASH_OFF_STATE_BASE, flashPageBuffer);
 
     // ReadFlashStorage(AKNANO_FLASH_OFF_DEV_CERTIFICATE, temp_buf, FLASH_PAGE_SIZE);
     // LogInfo(("AFTER [%x] cert=%s", temp_buf[0], temp_buf));

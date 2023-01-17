@@ -268,7 +268,7 @@ static BaseType_t prvDownloadFile(NetworkContext_t *pxNetworkContext,
     (void)memset(&xRequestInfo, 0, sizeof(xRequestInfo));
     (void)memset(&xResponse, 0, sizeof(xResponse));
 
-    xResponse.getTime = AkNanoGetTime; //nondet_boot();// ? NULL : GetCurrentTimeStub;
+    xResponse.getTime = aknano_get_time; //nondet_boot();// ? NULL : GetCurrentTimeStub;
 
     /* Initialize the request object. */
     xRequestInfo.pHost = AKNANO_DOWNLOAD_ENDPOINT;
@@ -426,7 +426,7 @@ static BaseType_t prvDownloadFile(NetworkContext_t *pxNetworkContext,
     }
 }
 
-int AkNanoDownloadAndFlashImage(struct aknano_context *aknano_context)
+int aknano_download_and_flash_image(struct aknano_context *aknano_context)
 {
     /* The transport layer interface used by the HTTP Client library. */
     TransportInterface_t xTransportInterface;
@@ -444,7 +444,7 @@ int AkNanoDownloadAndFlashImage(struct aknano_context *aknano_context)
     // xDemoStatus = connectToServerWithBackoffRetries( prvConnectToServer,
     //                                                     &xNetworkContext );
 
-    LogInfo(("AkNanoDownloadAndFlashImage: prvConnectToServer Result: %ld", xDemoStatus));
+    LogInfo(("aknano_download_and_flash_image: prvConnectToServer Result: %ld", xDemoStatus));
     if (xDemoStatus == pdPASS) {
         /* Define the transport interface. */
         xTransportInterface.pNetworkContext = &xNetworkContext;

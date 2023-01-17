@@ -15,7 +15,7 @@
 
 #define AKNANO_STORAGE_FLASH_OFFSET 0x600000
 
-status_t InitFlashStorage()
+status_t aknano_init_flash_storage()
 {
     int mflash_result = mflash_drv_init();
 
@@ -26,30 +26,30 @@ status_t InitFlashStorage()
     return 0;
 }
 
-status_t ReadFlashStorage(int offset, void *output, size_t outputMaxLen)
+status_t aknano_read_flash_storage(int offset, void *output, size_t outputMaxLen)
 {
     int mflash_result = mflash_drv_read(AKNANO_STORAGE_FLASH_OFFSET + offset, output, outputMaxLen / 4 * 4);
 
     if (mflash_result != 0) {
-        LogError(("ReadFlashStorage: mflash_drv_read error %d", mflash_result));
+        LogError(("aknano_read_flash_storage: mflash_drv_read error %d", mflash_result));
         return -1;
     }
     return 0;
 }
 
 // Data needs to be a 256 bytes array
-status_t UpdateFlashStoragePage(int offset, void *data)
+status_t aknano_update_flash_storage(int offset, void *data)
 {
     int mflash_result = mflash_drv_sector_erase(AKNANO_STORAGE_FLASH_OFFSET + offset);
 
     if (mflash_result != 0) {
-        LogError(("UpdateFlashStoragePage: mflash_drv_sector_erase error %d", mflash_result));
+        LogError(("aknano_update_flash_storage: mflash_drv_sector_erase error %d", mflash_result));
         return -1;
     }
 
     mflash_result = mflash_drv_page_program(AKNANO_STORAGE_FLASH_OFFSET + offset, data);
     if (mflash_result != 0) {
-        LogError(("UpdateFlashStoragePage: mflash_drv_page_program error %d", mflash_result));
+        LogError(("aknano_update_flash_storage: mflash_drv_page_program error %d", mflash_result));
         return -1;
     }
 
@@ -57,7 +57,7 @@ status_t UpdateFlashStoragePage(int offset, void *data)
 }
 
 /* offset needs to be alligned to MFLASH_SECTOR_SIZE (4K) */
-status_t WriteDataToFlash(int offset, const void *data, size_t data_len)
+status_t aknano_write_data_to_flash(int offset, const void *data, size_t data_len)
 {
     size_t total_processed = 0;
     size_t chunk_len;
@@ -121,7 +121,7 @@ status_t WriteDataToFlash(int offset, const void *data, size_t data_len)
 }
 
 #ifdef AKNANO_ALLOW_PROVISIONING
-status_t ClearFlashSector(int offset)
+status_t aknano_clear_flash_sector(int offset)
 {
     int mflash_result = mflash_drv_sector_erase(AKNANO_STORAGE_FLASH_OFFSET + offset);
 
@@ -131,12 +131,12 @@ status_t ClearFlashSector(int offset)
     return 0;
 }
 // Data needs to be a 256 bytes array
-status_t WriteFlashPage(int offset, void *data)
+status_t aknano_write_flash_page(int offset, void *data)
 {
     int mflash_result = mflash_drv_page_program(AKNANO_STORAGE_FLASH_OFFSET + offset, data);
 
     if (mflash_result != 0)
-        LogError(("WriteFlashPage error %d", mflash_result));
+        LogError(("aknano_write_flash_page error %d", mflash_result));
     return 0;
 }
 

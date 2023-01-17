@@ -203,7 +203,7 @@ static BaseType_t prvSendHttpRequest(const TransportInterface_t *pxTransportInte
     (void)memset(pxResponse, 0, sizeof(*pxResponse));
     (void)memset(&xRequestHeaders, 0, sizeof(xRequestHeaders));
 
-    pxResponse->getTime = AkNanoGetTime; //nondet_boot();// ? NULL : GetCurrentTimeStub;
+    pxResponse->getTime = aknano_get_time; //nondet_boot();// ? NULL : GetCurrentTimeStub;
 
     /* Initialize the request object. */
     xRequestInfo.pHost = AKNANO_REST_API_ENDPOINT;
@@ -269,7 +269,7 @@ static BaseType_t prvSendHttpRequest(const TransportInterface_t *pxTransportInte
     return xStatus;
 }
 
-bool AkNanoRegisterDevice(struct aknano_settings *aknano_settings)
+bool aknano_register_device(struct aknano_settings *aknano_settings)
 {
     TransportInterface_t xTransportInterface;
     /* The network context for the transport layer interface. */
@@ -279,7 +279,7 @@ bool AkNanoRegisterDevice(struct aknano_settings *aknano_settings)
     SecureSocketsTransportParams_t secureSocketsTransportParams = { 0 };
     HTTPResponse_t xResponse;
 
-    LogInfo(("AkNanoRegisterDevice BEGIN"));
+    LogInfo(("aknano_register_device BEGIN"));
     /* Upon return, pdPASS will indicate a successful demo execution.
     * pdFAIL will indicate some failures occurred during execution. The
     * user of this demo must check the logs for any failure codes. */
@@ -349,9 +349,9 @@ bool AkNanoRegisterDevice(struct aknano_settings *aknano_settings)
     /* Close the network connection.  */
     xNetworkStatus = SecureSocketsTransport_Disconnect(&xNetworkContext);
     if (xNetworkStatus != TRANSPORT_SOCKET_STATUS_SUCCESS)
-        LogError(("AkNanoRegisterDevice Disconnection error: %d", xNetworkStatus));
+        LogError(("aknano_register_device Disconnection error: %d", xNetworkStatus));
 
-    LogInfo(("AkNanoRegisterDevice END ret=%d", ret));
+    LogInfo(("aknano_register_device END ret=%d", ret));
 
     return ret;
 }

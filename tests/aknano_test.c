@@ -37,7 +37,7 @@ TEST(Full_AKNano, akNano_TestFlashAccess){
     uint8_t i;
     status_t ret;
 
-    ret = ReadFlashStorage(AKNANO_FLASH_OFF_STATE_BASE,
+    ret = aknano_read_flash_storage(AKNANO_FLASH_OFF_STATE_BASE,
                            original_data,
                            sizeof(original_data));
 
@@ -46,11 +46,11 @@ TEST(Full_AKNano, akNano_TestFlashAccess){
     for (i = 0; i < sizeof(new_data); i++)
         new_data[i] = i;
 
-    ret = UpdateFlashStoragePage(AKNANO_FLASH_OFF_STATE_BASE,
+    ret = aknano_update_flash_storage(AKNANO_FLASH_OFF_STATE_BASE,
                                  new_data);
 
     TEST_ASSERT(ret == kStatus_Success);
-    ret = ReadFlashStorage(AKNANO_FLASH_OFF_STATE_BASE,
+    ret = aknano_read_flash_storage(AKNANO_FLASH_OFF_STATE_BASE,
                            new_data, sizeof(new_data));
 
     TEST_ASSERT(ret == kStatus_Success);
@@ -58,12 +58,12 @@ TEST(Full_AKNano, akNano_TestFlashAccess){
     for (i = 0; i < sizeof(new_data); i++)
         TEST_ASSERT(new_data[i] == i);
 
-    ret = UpdateFlashStoragePage(AKNANO_FLASH_OFF_STATE_BASE,
+    ret = aknano_update_flash_storage(AKNANO_FLASH_OFF_STATE_BASE,
                                  original_data);
 
     TEST_ASSERT(ret == kStatus_Success);
 
-    ret = ReadFlashStorage(AKNANO_FLASH_OFF_STATE_BASE,
+    ret = aknano_read_flash_storage(AKNANO_FLASH_OFF_STATE_BASE,
                            new_data, sizeof(new_data));
 
     TEST_ASSERT(ret == kStatus_Success);
@@ -80,14 +80,14 @@ TEST(Full_AKNano, akNano_TestDeviceGatewayAccess){
     if (!is_valid_certificate_available(false))
         TEST_IGNORE_MESSAGE("Device certificate is not available. Skipping Device Gateway connection test");
 
-    xDemoStatus = AkNano_ConnectToDevicesGateway(&network_context);
+    xDemoStatus = aknano_connect_to_device_gateway(&network_context);
     TEST_ASSERT(xDemoStatus == pdPASS);
 
     /* Close the network connection.  */
     aknano_mtls_disconnect(&network_context);
 }
 
-int RunAkNanoTest(void)
+int aknano_run_tests(void)
 {
     int status = -1;
 
