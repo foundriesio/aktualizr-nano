@@ -121,6 +121,7 @@ int aknano_provision_device()
     vDevModeKeyProvisioning_AkNano((uint8_t *)key_buf,
                                    (uint8_t *)cert_buf);
     LogInfo(("Provisioning done"));
+    vTaskDelay(pdMS_TO_TICKS(2000));
 #endif
     return ret;
 }
