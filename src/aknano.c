@@ -28,7 +28,7 @@
  * response after the HTTP request is sent out. However, the user can also
  * decide to use separate buffers for storing the HTTP request and response.
  */
-uint8_t ucUserBuffer[democonfigUSER_BUFFER_LENGTH];
+uint8_t ucUserBuffer[AKNANO_IMAGE_DOWNLOAD_BUFFER_LENGTH];
 
 /**
  * @brief Global entry time into the application to use as a reference timestamp
@@ -42,16 +42,6 @@ uint8_t ucUserBuffer[democonfigUSER_BUFFER_LENGTH];
 static struct aknano_settings xaknano_settings;
 static struct aknano_context xaknano_context;
 
-
-long unsigned int aknano_get_time(void)
-{
-    static long unsigned int t;
-
-    //  = clock() * 1000 / CLOCKS_PER_SEC;
-    t++;
-    // LogInfo(( "osfGetTime %d", t) );
-    return t;
-}
 #ifdef AKNANO_DUMP_MEMORY_USAGE_INFO
 void aknano_dump_memory_info(const char *context)
 {
@@ -65,7 +55,6 @@ void aknano_update_settings_in_flash(struct aknano_settings *aknano_settings)
     char flashPageBuffer[256];
 
     memset(flashPageBuffer, 0, sizeof(flashPageBuffer));
-
     memcpy(flashPageBuffer, &aknano_settings->last_applied_version, sizeof(int));
     memcpy(flashPageBuffer + sizeof(int), &aknano_settings->last_confirmed_version, sizeof(int));
     memcpy(flashPageBuffer + sizeof(int) * 2, aknano_settings->ongoing_update_correlation_id,
@@ -74,10 +63,7 @@ void aknano_update_settings_in_flash(struct aknano_settings *aknano_settings)
     flashPageBuffer[sizeof(int) * 2 + sizeof(aknano_settings->ongoing_update_correlation_id)] =
         aknano_settings->is_device_registered;
 #endif
-    LogInfo(("Saving buffer: 0x%x 0x%x 0x%x 0x%x    0x%x 0x%x 0x%x 0x%x    0x%x 0x%x 0x%x 0x%x",
-             flashPageBuffer[0], flashPageBuffer[1], flashPageBuffer[2], flashPageBuffer[3],
-             flashPageBuffer[4], flashPageBuffer[5], flashPageBuffer[6], flashPageBuffer[7],
-             flashPageBuffer[8], flashPageBuffer[9], flashPageBuffer[10], flashPageBuffer[11]));
+    LogInfo(("Writing settings to flash..."));
     aknano_write_data_to_storage(AKNANO_FLASH_OFF_STATE_BASE, flashPageBuffer, sizeof(flashPageBuffer));
 }
 
@@ -150,12 +136,12 @@ void aknano_init_settings(struct aknano_settings *aknano_settings)
 
     snprintf(aknano_settings->device_name, sizeof(aknano_settings->device_name),
              "%s-%s",
-             CONFIG_BOARD, aknano_settings->serial);
+             AKNANO_BOARD_NAME, aknano_settings->serial);
 
     LogInfo(("aknano_init_settings: device_name=%s",
              aknano_settings->device_name));
 
-    aknano_settings->hwid = CONFIG_BOARD;
+    aknano_settings->hwid = AKNANO_BOARD_NAME;
 }
 
 // #define AKNANO_TEST_ROLLBACK
@@ -187,8 +173,6 @@ static int aknano_handle_img_confirmed(struct aknano_settings *aknano_settings)
         image_ok = true;
     }
 
-    // LogInfo(("Image is%s confirmed OK", image_ok ? "" : " not"));
-
     LogInfo(("aknano_settings.ongoing_update_correlation_id='%s'", aknano_settings->ongoing_update_correlation_id));
 
     if (aknano_settings->last_applied_version
@@ -198,58 +182,19 @@ static int aknano_handle_img_confirmed(struct aknano_settings *aknano_settings)
         aknano_send_event(aknano_settings,
                           AKNANO_EVENT_INSTALLATION_COMPLETED,
                           -1, AKNANO_EVENT_SUCCESS_FALSE);
-        //aknano_write_to_nvs(AKNANO_NVS_ID_ONGOING_UPDATE_COR_ID, "", 0);
-
         memset(aknano_settings->ongoing_update_correlation_id, 0,
                sizeof(aknano_settings->ongoing_update_correlation_id));
         aknano_update_settings_in_flash(aknano_settings);
     }
 
     if (!image_ok) {
-        //ret = boot_write_img_confirmed();
-        //if (ret < 0) {
-        //    LogError(("Couldn't confirm this image: %d", ret));
-        //    return ret;
-        //}
-
-        // LogInfo(("Marked image as OK"));
-
-        // image_ok = boot_is_img_confirmed();
-        // LogInfo(("after Image is%s confirmed OK", image_ok ? "" : " not"));
-
         aknano_send_event(aknano_settings, AKNANO_EVENT_INSTALLATION_COMPLETED, 0, AKNANO_EVENT_SUCCESS_TRUE);
-
-        // aknano_write_to_nvs(AKNANO_NVS_ID_ONGOING_UPDATE_COR_ID, "", 0);
-        // aknano_write_to_nvs(AKNANO_NVS_ID_LAST_CONFIRMED_VERSION, &aknano_settings.running_version, sizeof(aknano_settings.running_version));
-        // aknano_write_to_nvs(AKNANO_NVS_ID_LAST_APPLIED_VERSION, &zero, sizeof(zero));
 
         memset(aknano_settings->ongoing_update_correlation_id, 0,
                sizeof(aknano_settings->ongoing_update_correlation_id));
         aknano_settings->last_applied_version = 0;
         aknano_settings->last_confirmed_version = aknano_settings->running_version;
         aknano_update_settings_in_flash(aknano_settings);
-
-        // aknano_write_to_nvs(AKNANO_NVS_ID_LAST_CONFIRMED_TAG, aknano_settings.tag, sizeof(aknano_settings.tag));
-
-        // TODO: do the same in FreeRTOS?
-        // ret = boot_erase_img_bank(FLASH_AREA_ID(image_1));
-        // if (ret) {
-        //     LOG_ERR("Failed to erase second slot");
-        //     return ret;
-        // }
-    } else {
-#if 0
-        // TODO: testing this
-        ret = boot_write_img_confirmed();
-        if (ret < 0) {
-            LOG_ERR("Couldn't confirm this image (forcing): %d", ret);
-            return ret;
-        }
-
-        LOG_INF("Marked image as OK (forcing)");
-        aknano_write_to_nvs(AKNANO_NVS_ID_LAST_CONFIRMED_VERSION, &aknano_settings.running_version, sizeof(aknano_settings.running_version));
-        aknano_write_to_nvs(AKNANO_NVS_ID_LAST_APPLIED_VERSION, &zero, sizeof(zero));
-#endif
     }
 
     if (aknano_settings->last_confirmed_version != aknano_settings->running_version) {

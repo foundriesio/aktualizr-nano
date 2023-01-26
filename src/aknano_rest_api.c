@@ -203,7 +203,7 @@ static BaseType_t prvSendHttpRequest(const TransportInterface_t *pxTransportInte
     (void)memset(pxResponse, 0, sizeof(*pxResponse));
     (void)memset(&xRequestHeaders, 0, sizeof(xRequestHeaders));
 
-    pxResponse->getTime = aknano_get_time; //nondet_boot();// ? NULL : GetCurrentTimeStub;
+    pxResponse->getTime = xTaskGetTickCount;
 
     /* Initialize the request object. */
     xRequestInfo.pHost = AKNANO_REST_API_ENDPOINT;

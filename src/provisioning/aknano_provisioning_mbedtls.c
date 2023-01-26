@@ -234,8 +234,6 @@ int aknano_gen_device_certificate_and_key(
     mbedtls_x509write_crt_init(&new_device_crt);
     mbedtls_x509_crt_init(&factory_crt);
 
-    LogInfo(("aknano_gen_device_certificate_and_key 1")); vTaskDelay(50 / portTICK_PERIOD_MS);
-
 #if 0
     ret = mbedtls_pk_parse_public_key(&device_key, pxDerPublicKey, ulDerPublicKeyLength);
     if (ret != 0) {
@@ -245,21 +243,15 @@ int aknano_gen_device_certificate_and_key(
     }
     LogInfo(("mbedtls_pk_parse_key OK")); vTaskDelay(50 / portTICK_PERIOD_MS);
 #endif
-    LogInfo(("aknano_gen_device_certificate_and_key 2")); vTaskDelay(50 / portTICK_PERIOD_MS);
-
     ret = mbedtls_pk_setup(&new_device_key, mbedtls_pk_info_from_type(MBEDTLS_PK_ECKEY));
     if (ret != 0) {
         mbedtls_printf("mbedtls_pk_setup error: %d", ret);
         goto exit;
     }
-    LogInfo(("aknano_gen_device_certificate_and_key 3")); vTaskDelay(50 / portTICK_PERIOD_MS);
 
     ret = mbedtls_entropy_add_source(&entropy, mbedtls_hardware_poll, NULL,
                                      MBEDTLS_ENTROPY_MIN_HARDWARE,
                                      MBEDTLS_ENTROPY_SOURCE_STRONG);
-    // ret = mbedtls_entropy_add_source(&entropy, mbedtls_platform_entropy_poll,
-    //             NULL, 0, MBEDTLS_ENTROPY_SOURCE_STRONG);
-    LogInfo(("aknano_gen_device_certificate_and_key 4")); vTaskDelay(50 / portTICK_PERIOD_MS);
 
     if (ret != 0) {
         mbedtls_printf("mbedtls_entropy_add_source error: %d [0x%04X]", ret, -ret);
@@ -270,7 +262,6 @@ int aknano_gen_device_certificate_and_key(
                                 &entropy,
                                 (const unsigned char *)pers,
                                 strlen(pers));
-    LogInfo(("aknano_gen_device_certificate_and_key 5")); vTaskDelay(50 / portTICK_PERIOD_MS);
     if (ret != 0) {
         mbedtls_printf("mbedtls_ctr_drbg_seed error: %d [0x%04X]", ret, -ret);
         goto exit;
@@ -283,12 +274,11 @@ int aknano_gen_device_certificate_and_key(
         mbedtls_printf("mbedtls_ecp_gen_key error: %d [0x%04X]", ret, -ret);
         goto exit;
     }
-    LogInfo(("aknano_gen_device_certificate_and_key 6")); vTaskDelay(50 / portTICK_PERIOD_MS);
 
     memset(key_buf, 0, AKNANO_CERT_BUF_SIZE);
     ret = mbedtls_pk_write_key_pem(&new_device_key, key_buf, AKNANO_CERT_BUF_SIZE);
     if (ret != 0) {
-        mbedtls_printf("Error writting key to buffer");
+        mbedtls_printf("Error writing key to buffer");
         goto exit;
     }
 
@@ -378,7 +368,7 @@ int aknano_gen_device_certificate_and_key(
     ret = mbedtls_x509write_crt_pem(&new_device_crt, cert_buf, AKNANO_CERT_BUF_SIZE,
                                     mbedtls_ctr_drbg_random, &ctr_drbg);
     if (ret != 0) {
-        mbedtls_printf("Error writting certificate to buffer ret=%d 0x%X \n", ret, (-ret) & 0xFFFF);
+        mbedtls_printf("Error writing certificate to buffer ret=%d 0x%X \n", ret, (-ret) & 0xFFFF);
         char s[500];
         mbedtls_strerror(ret, s, 500);
         mbedtls_printf("[%s]\n", s);

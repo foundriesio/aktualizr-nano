@@ -34,6 +34,28 @@
 #define AKNANO_DOWNLOAD_ENDPOINT AKNANO_FACTORY_UUID ".ostree.foundries.io"
 #define AKNANO_DOWNLOAD_PORT AKNANO_DEVICE_GATEWAY_PORT
 
+/**
+ * @brief The length of the HTTP GET method.
+ */
+#define httpexampleHTTP_METHOD_GET_LENGTH                    (sizeof(HTTP_METHOD_GET) - 1)
+
+/**
+ * @brief Field name of the HTTP range header to read from server response.
+ */
+#define httpexampleHTTP_CONTENT_RANGE_HEADER_FIELD           "Content-Range"
+
+/**
+ * @brief Length of the HTTP range header field.
+ */
+#define httpexampleHTTP_CONTENT_RANGE_HEADER_FIELD_LENGTH    (sizeof(httpexampleHTTP_CONTENT_RANGE_HEADER_FIELD) - 1)
+
+/**
+ * @brief The HTTP status code returned for partial content.
+ */
+#define httpexampleHTTP_STATUS_CODE_PARTIAL_CONTENT          206
+
+
+
 #include "aknano_secret.h"
 static const char donwloadServer_ROOT_CERTIFICATE_PEM[] = AKNANO_DEVICE_GATEWAY_CERTIFICATE;
 
@@ -197,7 +219,7 @@ static BaseType_t prvDownloadFile(NetworkContext_t *pxNetworkContext,
     (void)memset(&xRequestInfo, 0, sizeof(xRequestInfo));
     (void)memset(&xResponse, 0, sizeof(xResponse));
 
-    xResponse.getTime = aknano_get_time; //nondet_boot();// ? NULL : GetCurrentTimeStub;
+    xResponse.getTime = xTaskGetTickCount;
 
     /* Initialize the request object. */
     xRequestInfo.pHost = AKNANO_DOWNLOAD_ENDPOINT;
@@ -210,19 +232,18 @@ static BaseType_t prvDownloadFile(NetworkContext_t *pxNetworkContext,
     /* Set "Connection" HTTP header to "keep-alive" so that multiple requests
      * can be sent over the same established TCP connection. This is done in
      * order to download the file in parts. */
-    // Current server closes the connection anyway, and reports an error. So just disable the line bellow
-    // xRequestInfo.reqFlags = HTTP_REQUEST_KEEP_ALIVE_FLAG;
+    xRequestInfo.reqFlags = HTTP_REQUEST_KEEP_ALIVE_FLAG;
 
     /* Set the buffer used for storing request headers. */
     xRequestHeaders.pBuffer = ucUserBuffer;
-    xRequestHeaders.bufferLen = democonfigUSER_BUFFER_LENGTH;
+    xRequestHeaders.bufferLen = sizeof(ucUserBuffer);
 
     /* Initialize the response object. The same buffer used for storing request
      * headers is reused here. */
     xResponse.pBuffer = ucUserBuffer;
-    xResponse.bufferLen = democonfigUSER_BUFFER_LENGTH;
+    xResponse.bufferLen = sizeof(ucUserBuffer);
 
-    xNumReqBytes = democonfigRANGE_REQUEST_LENGTH;
+    xNumReqBytes = AKNANO_IMAGE_DOWNLOAD_REQUEST_LENGTH;
     xStatus = pdPASS;
 
     int32_t stored = 0;

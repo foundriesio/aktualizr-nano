@@ -53,8 +53,6 @@ static void parse_config(const char *config_data, int buffer_len, struct aknano_
     unsigned int valueLength;
     int int_value;
 
-
-    // {"polling_interval":{"Value":"10","Unencrypted":true},"tag":{"Value":"devel","Unencrypted":true},"z-50-fioctl.toml":{"Value":"\n[pacman]\n  tags = \"devel\"\n","Unencrypted":true,"OnChanged":["/usr/share/fioconfig/handlers/aktualizr-toml-update"]}}"
     if (result == JSONSuccess) {
         result = JSON_Search(config_data, buffer_len,
                              "tag" TUF_JSON_QUERY_KEY_SEPARATOR "Value", strlen("tag" TUF_JSON_QUERY_KEY_SEPARATOR "Value"),
@@ -68,9 +66,6 @@ static void parse_config(const char *config_data, int buffer_len, struct aknano_
                 strncpy(aknano_settings->tag, value,
                         valueLength);
                 aknano_settings->tag[valueLength] = '\0';
-                // aknano_write_to_nvs(AKNANO_NVS_ID_TAG, aknano_settings->tag,
-                //         strnlen(aknano_settings->tag,
-                //         AKNANO_MAX_TAG_LENGTH));
             }
         } else {
             LogInfo(("parse_config_data: Tag config not found"));
@@ -81,20 +76,14 @@ static void parse_config(const char *config_data, int buffer_len, struct aknano_
                              &value, &valueLength);
 
         if (result == JSONSuccess) {
-            if (sscanf(value, "%d", &int_value) <= 0)
+            if (sscanf(value, "%d", &int_value) <= 0) {
                 LogWarn(("Invalid polling_interval '%s'", value));
-            // return;
-
-            if (int_value != aknano_settings->polling_interval) {
-                LogInfo(("parse_config_data: Polling interval has changed (%d => %d)",
-                         aknano_settings->polling_interval, int_value));
-                aknano_settings->polling_interval = int_value;
-                // aknano_write_to_nvs(AKNANO_NVS_ID_POLLING_INTERVAL,
-                //         &aknano_settings->polling_interval,
-                //         sizeof(aknano_settings->polling_interval));
             } else {
-                // LogInfo(("parse_config_data: Polling interval is unchanged (%d)",
-                //         aknano_settings->polling_interval));
+                if (int_value != aknano_settings->polling_interval) {
+                    LogInfo(("parse_config_data: Polling interval has changed (%d => %d)",
+                             aknano_settings->polling_interval, int_value));
+                    aknano_settings->polling_interval = int_value;
+                }
             }
         } else {
             LogInfo(("parse_config_data: polling_interval config not found"));
@@ -107,51 +96,13 @@ static void parse_config(const char *config_data, int buffer_len, struct aknano_
         if (result == JSONSuccess) {
             if (sscanf(value, "%d", &int_value) <= 0)
                 LogWarn(("Invalid btn_polling_interval '%s'", value));
-            // return;
-            UpdateSettingValue("btn_polling_interval", int_value);
+            else
+                UpdateSettingValue("btn_polling_interval", int_value);
         }
     } else {
         LogWarn(("Invalid config JSON result=%d", result));
     }
 }
-
-
-// static void get_pseudo_time_str(time_t boot_up_epoch, char *output, const char* event_type, int success)
-// {
-//     int event_delta = 0;
-//     int base_delta = 180;
-
-//     if (boot_up_epoch == 0)
-//         boot_up_epoch = BUILD_EPOCH_MS / 1000;
-
-
-//     if (!strcmp(event_type, AKNANO_EVENT_DOWNLOAD_STARTED)) {
-//         event_delta = 1;
-//     } else if (!strcmp(event_type, AKNANO_EVENT_DOWNLOAD_COMPLETED)) {
-//         event_delta = 20;
-//     } else if (!strcmp(event_type, AKNANO_EVENT_INSTALLATION_STARTED)) {
-//         event_delta = 21;
-//     } else if (!strcmp(event_type, AKNANO_EVENT_INSTALLATION_APPLIED)) {
-//         event_delta = 22;
-//     } else if (!strcmp(event_type, AKNANO_EVENT_INSTALLATION_COMPLETED)) {
-//         if (success == AKNANO_EVENT_SUCCESS_TRUE)
-//             event_delta = 42;
-//         else
-//             event_delta = 242;
-//     }
-
-//     // time_t current_epoch_ms = boot_up_epoch_ms + base_delta + event_delta;
-//     time_t current_epoch_sec = boot_up_epoch + base_delta + event_delta;
-//     struct tm *tm = gmtime(&current_epoch_sec);
-
-//     sprintf(output, "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ",
-//         tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
-//         tm->tm_hour, tm->tm_min, tm->tm_sec,
-//         0);
-
-//     LogInfo(("get_pseudo_time_str: %s", output));
-// }
-
 
 static void get_time_str(time_t boot_up_epoch, char *output)
 {
@@ -162,8 +113,6 @@ static void get_time_str(time_t boot_up_epoch, char *output)
             tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
             tm->tm_hour, tm->tm_min, tm->tm_sec,
             0);
-
-    // LogInfo(("get_time_str: %s (boot_up_epoch=%lld)", output, boot_up_epoch));
 }
 
 
@@ -257,10 +206,7 @@ static bool fill_event_payload(char *payload,
                  old_version, new_version, aknano_settings->tag);
     }
 
-    // if (aknano_settings->boot_up_epoch)
     get_time_str(aknano_settings->boot_up_epoch, current_time_str);
-    // else
-    //     get_pseudo_time_str(aknano_settings->boot_up_epoch, current_time_str, event_type, success);
 
     LogInfo(("fill_event_payload: time=%s cor_id=%s uuid=%s", current_time_str, correlation_id, evt_uuid));
 
@@ -310,16 +256,15 @@ BaseType_t aknano_connect_to_device_gateway(struct aknano_network_context *netwo
 }
 
 BaseType_t aknano_send_http_request(struct aknano_network_context *network_context,
-                                  const char *                   pcMethod,
-                                  const char *                   pcPath,
-                                  const char *                   pcBody,
-                                  size_t                         xBodyLen,
-                                  struct aknano_settings *       aknano_settings
-                                  )
+                                    const char *                   pcMethod,
+                                    const char *                   pcPath,
+                                    const char *                   pcBody,
+                                    size_t                         xBodyLen,
+                                    struct aknano_settings *       aknano_settings
+                                    )
 {
     char *tag = aknano_settings->tag;
     int version = aknano_settings->running_version;
-
     char active_target[200];
 
     snprintf(active_target, sizeof(active_target), "%s-v%d", aknano_settings->hwid, version);
@@ -336,7 +281,7 @@ BaseType_t aknano_send_http_request(struct aknano_network_context *network_conte
         pcBody,
         xBodyLen,
         ucUserBuffer,
-        democonfigUSER_BUFFER_LENGTH,
+        sizeof(ucUserBuffer),
         header_keys,
         header_values,
         2);
@@ -346,8 +291,8 @@ BaseType_t aknano_send_http_request(struct aknano_network_context *network_conte
 
 
 bool aknano_send_event(struct aknano_settings *aknano_settings,
-                     const char *event_type,
-                     int version, int success)
+                       const char *event_type,
+                       int version, int success)
 {
     struct aknano_network_context network_context;
 
@@ -393,7 +338,6 @@ int aknano_poll(struct aknano_context *aknano_context)
     BaseType_t xDemoStatus;
     bool isUpdateRequired = false;
     bool isRebootRequired = false;
-    // off_t offset = 0;
     struct aknano_settings *aknano_settings = aknano_context->settings;
     int tuf_ret = 0;
 
@@ -464,22 +408,22 @@ int aknano_poll(struct aknano_context *aknano_context)
         snprintf(bodyBuffer, sizeof(bodyBuffer),
                  "{ " \
                  " \"product\": \"%s\"," \
-                 " \"description\": \"MCUXpresso PoC\"," \
+                 " \"description\": \"Aktualizr-nano PoC\"," \
                  " \"claimed\": true, " \
                  " \"serial\": \"%s\", " \
                  " \"id\": \"%s\", " \
                  " \"class\": \"MCU\" " \
                  "}",
-                 CONFIG_BOARD, aknano_settings->serial, CONFIG_BOARD);
+                 AKNANO_BOARD_NAME, aknano_settings->serial, AKNANO_BOARD_NAME);
 
         aknano_send_http_request(&network_context, HTTP_METHOD_PUT,
-                               "/system_info", bodyBuffer, strlen(bodyBuffer),
-                               aknano_context->settings);
+                                 "/system_info", bodyBuffer, strlen(bodyBuffer),
+                                 aknano_context->settings);
 
         fill_network_info(bodyBuffer, sizeof(bodyBuffer));
         aknano_send_http_request(&network_context, HTTP_METHOD_PUT,
-                               "/system_info/network", bodyBuffer, strlen(bodyBuffer),
-                               aknano_context->settings);
+                                 "/system_info/network", bodyBuffer, strlen(bodyBuffer),
+                                 aknano_context->settings);
 
         // LogInfo(("aknano_settings->tag=%s",aknano_settings->tag));
         sprintf(bodyBuffer,
@@ -490,11 +434,11 @@ int aknano_poll(struct aknano_context *aknano_context)
                 "binary_compilation_local_time = \""__DATE__ " " __TIME__ "\"\n"
                 "provisioning_mode = \"" AKNANO_PROVISIONING_MODE "\"",
                 aknano_settings->polling_interval,
-                CONFIG_BOARD,
+                AKNANO_BOARD_NAME,
                 aknano_settings->tag);
         aknano_send_http_request(&network_context, HTTP_METHOD_PUT,
-                               "/system_info/config", bodyBuffer, strlen(bodyBuffer),
-                               aknano_context->settings);
+                                 "/system_info/config", bodyBuffer, strlen(bodyBuffer),
+                                 aknano_context->settings);
     }
 
     /* Close the network connection.  */
@@ -502,33 +446,26 @@ int aknano_poll(struct aknano_context *aknano_context)
 
 
     if (isUpdateRequired) {
-        // version = hb_context.selected_target.version;
-
         char unused_serial[AKNANO_MAX_SERIAL_LENGTH];
         /* Gen a random correlation ID for the update events */
         aknano_gen_serial_and_uuid(aknano_settings->ongoing_update_correlation_id,
                                    unused_serial);
 
-
-        // aknano_write_to_nvs(AKNANO_NVS_ID_ONGOING_UPDATE_COR_ID,
-        //             aknano_settings.ongoing_update_correlation_id,
-        //             AKNANO_MAX_UPDATE_CORRELATION_ID_LENGTH);
-
         aknano_send_event(aknano_context->settings, AKNANO_EVENT_DOWNLOAD_STARTED,
-                        aknano_context->selected_target.version,
-                        AKNANO_EVENT_SUCCESS_UNDEFINED);
+                          aknano_context->selected_target.version,
+                          AKNANO_EVENT_SUCCESS_UNDEFINED);
         if (aknano_download_and_flash_image(aknano_context)) {
             aknano_send_event(aknano_context->settings, AKNANO_EVENT_DOWNLOAD_COMPLETED,
-                            aknano_context->selected_target.version,
-                            AKNANO_EVENT_SUCCESS_TRUE);
+                              aknano_context->selected_target.version,
+                              AKNANO_EVENT_SUCCESS_TRUE);
             aknano_send_event(aknano_context->settings, AKNANO_EVENT_INSTALLATION_STARTED,
-                            aknano_context->selected_target.version,
-                            AKNANO_EVENT_SUCCESS_UNDEFINED);
+                              aknano_context->selected_target.version,
+                              AKNANO_EVENT_SUCCESS_UNDEFINED);
 
             aknano_settings->last_applied_version = aknano_context->selected_target.version;
             aknano_send_event(aknano_context->settings, AKNANO_EVENT_INSTALLATION_APPLIED,
-                            aknano_context->selected_target.version,
-                            AKNANO_EVENT_SUCCESS_TRUE);
+                              aknano_context->selected_target.version,
+                              AKNANO_EVENT_SUCCESS_TRUE);
 
             LogInfo(("Requesting update on next boot (ReadyForTest)"));
             status_t status;
@@ -539,14 +476,11 @@ int aknano_poll(struct aknano_context *aknano_context)
                 isRebootRequired = true;
         } else {
             aknano_send_event(aknano_context->settings, AKNANO_EVENT_DOWNLOAD_COMPLETED,
-                            aknano_context->selected_target.version,
-                            AKNANO_EVENT_SUCCESS_FALSE);
+                              aknano_context->selected_target.version,
+                              AKNANO_EVENT_SUCCESS_FALSE);
         }
 
         aknano_update_settings_in_flash(aknano_settings);
-
-        // TODO: Add download failed event
-        // AkNanoSendEvent(aknano_context, AKNANO_EVENT_DOWNLOAD_COMPLETED, aknano_context->selected_target.version);
     }
 
     if (isRebootRequired) {

@@ -15,13 +15,6 @@
 #include "mflash_common.h"
 #include "mflash_drv.h"
 
-#define AKNANO_STORAGE_FLASH_OFFSET 0x600000
-#define FLASH_PAGE_SIZE 256
-#define FLASH_SECTOR_SIZE 4096
-
-// Sectors used for AKNANO data
-#define AKNANO_FLASH_SECTORS_COUNT 10
-
 status_t aknano_init_flash_storage()
 {
     int mflash_result = mflash_drv_init();
@@ -55,7 +48,7 @@ status_t aknano_write_data_to_flash(int offset, const void *data, size_t data_le
     int32_t next_erase_addr = offset;
     status_t ret = 0;
 
-    do{
+    do {
         /* The data is expected for be received by page sized chunks (except for the last one) */
         int remaining_bytes = data_len - total_processed;
         if (remaining_bytes < MFLASH_PAGE_SIZE)
@@ -91,8 +84,6 @@ status_t aknano_write_data_to_flash(int offset, const void *data, size_t data_le
 
             total_processed += chunk_len;
             chunk_flash_addr += chunk_len;
-
-            // LogInfo(("store_update_image: processed %i bytes", total_processed));
         }
     } while (chunk_len == MFLASH_PAGE_SIZE);
 
@@ -130,33 +121,20 @@ int aknano_clear_provisioned_data()
     int offset;
 
     LogInfo(("Clearing provisioned device data from flash"));
-    for (offset = 0; offset < AKNANO_FLASH_SECTORS_COUNT * FLASH_SECTOR_SIZE; offset += FLASH_SECTOR_SIZE)
+    for (offset = 0; offset < AKNANO_FLASH_SECTORS_COUNT * MFLASH_SECTOR_SIZE; offset += MFLASH_SECTOR_SIZE)
         aknano_clear_flash_sector(offset);
     return 0;
 }
 
-status_t aknano_store_provisioning_data(const char *uuid, const char *serial, char *cert_buf, const char *key_buf)
+status_t aknano_save_uuid_and_serial(const char *uuid, const char *serial, char *cert_buf, const char *key_buf)
 {
     int offset;
     char uuid_and_serial[256];
 
     aknano_clear_provisioned_data();
-
     memcpy(uuid_and_serial, uuid, AKNANO_MAX_UUID_LENGTH);
     memcpy(uuid_and_serial + 128, serial, AKNANO_MAX_SERIAL_LENGTH);
     aknano_write_flash_page(AKNANO_FLASH_OFF_DEV_UUID, uuid_and_serial);
-#ifndef AKNANO_ENABLE_EL2GO
-    if (cert_buf)
-        for (offset = 0; offset < AKNANO_CERT_BUF_SIZE; offset += FLASH_PAGE_SIZE)
-            aknano_write_flash_page(AKNANO_FLASH_OFF_DEV_CERTIFICATE + offset, cert_buf + offset);
-
-    if (key_buf)
-        for (offset = 0; offset < AKNANO_CERT_BUF_SIZE; offset += FLASH_PAGE_SIZE)
-            aknano_write_flash_page(AKNANO_FLASH_OFF_DEV_KEY + offset, key_buf + offset);
-
-#endif
-    // Clear execution settings area of the flash
-    aknano_clear_flash_sector(AKNANO_FLASH_OFF_STATE_BASE);
 }
 
 #endif

@@ -16,14 +16,6 @@
 #define JSON_ARRAY_LIMIT_COUNT 10
 
 /* TUF "callbacks" */
-#define AKNANO_FLASH_OFF_TUF_ROLES (16 * 1024)
-#define AKNANO_FLASH_OFF_TUF_ROLE_ROOT (AKNANO_FLASH_OFF_TUF_ROLES)
-#define AKNANO_FLASH_OFF_TUF_ROLE_TIMESTAMP (AKNANO_FLASH_OFF_TUF_ROLE_ROOT + (8 * 1024))
-#define AKNANO_FLASH_OFF_TUF_ROLE_SNAPSHOT (AKNANO_FLASH_OFF_TUF_ROLE_TIMESTAMP + (8 * 1024))
-#define AKNANO_FLASH_OFF_TUF_ROLE_TARGETS (AKNANO_FLASH_OFF_TUF_ROLE_SNAPSHOT + (8 * 1024))
-
-#define AKNANO_FLASH_OFF_TUF_ROOT_PROVISIONING (64 * 1024)
-
 static int get_flash_offset_for_role(enum tuf_role role)
 {
     switch (role) {
@@ -152,7 +144,7 @@ int aknano_provision_tuf_root(struct aknano_context *aknano_context)
             return -1;
 
         // LogInfo(("write_local_file: role=%d initial_offset=%d len=%d", role, initial_offset, len));
-        ret = aknano_write_data_to_flash(AKNANO_FLASH_OFF_TUF_ROOT_PROVISIONING, tuf_data_buffer, file_size);
+        ret = aknano_write_data_to_storage(AKNANO_FLASH_OFF_TUF_ROOT_PROVISIONING, tuf_data_buffer, file_size);
     }
     return ret;
 }
@@ -161,6 +153,6 @@ int aknano_provision_tuf_root(struct aknano_context *aknano_context)
 #ifdef AKNANO_DELETE_PROVISIONED_TUF_ROOT
 int aknano_clear_provisioned_tuf_root()
 {
-    return aknano_write_data_to_flash(AKNANO_FLASH_OFF_TUF_ROOT_PROVISIONING, "\xFF", 1);
+    return aknano_write_data_to_storage(AKNANO_FLASH_OFF_TUF_ROOT_PROVISIONING, "\xFF", 1);
 }
 #endif

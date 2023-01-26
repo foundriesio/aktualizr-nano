@@ -127,7 +127,7 @@ BaseType_t aknano_mtls_send_http_request(
     (void)memset(&network_context->xResponse, 0, sizeof(network_context->xResponse));
     (void)memset(&xRequestHeaders, 0, sizeof(xRequestHeaders));
 
-    network_context->xResponse.getTime = aknano_get_time; //nondet_boot();// ? NULL : GetCurrentTimeStub;
+    network_context->xResponse.getTime = xTaskGetTickCount;
 
     /* Initialize the request object. */
     xRequestInfo.pHost = hostname;

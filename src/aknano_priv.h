@@ -51,62 +51,69 @@
 
 // #define AKNANO_DRY_RUN
 
-#define CONFIG_BOARD BOARD_NAME
+#define AKNANO_BOARD_NAME BOARD_NAME
+#define TUF_DATA_BUFFER_LEN 10 * 1024
 
-#define AKNANO_SLEEP_LENGTH 8
-
-#define AKNANO_SHA256_LEN 32
-
-#define CANCEL_BASE_SIZE 50
 #define RECV_BUFFER_SIZE 1640
 #define URL_BUFFER_SIZE 300
-#define STATUS_BUFFER_SIZE 200
-#define DOWNLOAD_HTTP_SIZE 200
-#define DEPLOYMENT_BASE_SIZE 50
-#define RESPONSE_BUFFER_SIZE 1500
-
-#define AKNANO_JSON_BUFFER_SIZE 1024
-#define NETWORK_TIMEOUT (2 * MSEC_PER_SEC)
-#define AKNANO_RECV_TIMEOUT (300 * MSEC_PER_SEC)
 
 #define AKNANO_MAX_TAG_LENGTH 32
 #define AKNANO_MAX_UPDATE_AT_LENGTH 32
 #define AKNANO_MAX_URI_LENGTH 120
-
-#ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
-#define AKNANO_MAX_TOKEN_LENGTH 100
-#endif
 #define AKNANO_CERT_BUF_SIZE 1024
 #define AKNANO_MAX_DEVICE_NAME_SIZE 100
 #define AKNANO_MAX_UUID_LENGTH 100
 #define AKNANO_MAX_SERIAL_LENGTH 100
-// #define AKNANO_MAX_FACTORY_NAME_LENGTH 100
 #define AKNANO_MAX_UPDATE_CORRELATION_ID_LENGTH 100
-// #define AKNANO_MAX_TAG_LENGTH 20
 
 #define AKNANO_MAX_FIRMWARE_SIZE 0x100000
 
-#define AKNANO_FLASH_OFF_DEV_CERTIFICATE 0
-#define AKNANO_FLASH_OFF_DEV_KEY 2048
-#define AKNANO_FLASH_OFF_DEV_UUID 4096
-#define AKNANO_FLASH_OFF_DEV_SERIAL AKNANO_FLASH_OFF_DEV_UUID + 128
+#ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
+#define AKNANO_MAX_TOKEN_LENGTH 100
+#endif
 
-// #define AKNANO_FLASH_OFF_REGISTRATION_STATUS 8192
-#define AKNANO_FLASH_OFF_STATE_BASE 8192
+/*
+ * Aktualizr nano storage
+ */
 
-#define AKNANO_FLASH_OFF_LAST_APPLIED_VERSION AKNANO_FLASH_OFF_STATE_BASE + 0
-#define AKNANO_FLASH_OFF_LAST_CONFIRMED_VERSION AKNANO_FLASH_OFF_STATE_BASE + sizeof(int)
-#define AKNANO_FLASH_OFF_ONGOING_UPDATE_COR_ID AKNANO_FLASH_OFF_STATE_BASE + sizeof(int) * 2
+/* Flash sector size. Usually, a whole sector needs to be erased at once */
+#define AKNANO_FLASH_SECTOR_SIZE 4096
+
+/* Physical address on the storage device where aknano data will be stored */
+#define AKNANO_STORAGE_FLASH_OFFSET 0x600000
+
+/* Number of flash sectors used by aknano, including TUF metadata */
+#define AKNANO_FLASH_SECTORS_COUNT 22
+
+/* Offset of each data field, relative to AKNANO_STORAGE_FLASH_OFFSET */
+
+/* Basic device ID */
+#define AKNANO_FLASH_OFF_DEV_ID_BASE 0
+#define AKNANO_FLASH_OFF_DEV_UUID   (AKNANO_FLASH_OFF_DEV_ID_BASE + 0)
+#define AKNANO_FLASH_OFF_DEV_SERIAL (AKNANO_FLASH_OFF_DEV_ID_BASE + 128)
+
+/* aknano state */
+#define AKNANO_FLASH_OFF_STATE_BASE (AKNANO_FLASH_SECTOR_SIZE * 1)
+#define AKNANO_FLASH_OFF_LAST_APPLIED_VERSION   (AKNANO_FLASH_OFF_STATE_BASE + 0)
+#define AKNANO_FLASH_OFF_LAST_CONFIRMED_VERSION (AKNANO_FLASH_OFF_STATE_BASE + sizeof(int))
+#define AKNANO_FLASH_OFF_ONGOING_UPDATE_COR_ID  (AKNANO_FLASH_OFF_STATE_BASE + sizeof(int) * 2)
+
+/* TUF metadata */
+#define AKNANO_FLASH_OFF_TUF_ROLES_BASE (AKNANO_FLASH_SECTOR_SIZE * 2)
+#define AKNANO_TUF_METADATA_MAX_SIZE (AKNANO_FLASH_SECTOR_SIZE * 4) /* 16 KB */
+#define AKNANO_FLASH_OFF_TUF_ROOT_PROVISIONING (AKNANO_FLASH_OFF_TUF_ROLES_BASE + (AKNANO_TUF_METADATA_MAX_SIZE * 0))
+#define AKNANO_FLASH_OFF_TUF_ROLE_ROOT         (AKNANO_FLASH_OFF_TUF_ROLES_BASE + (AKNANO_TUF_METADATA_MAX_SIZE * 1))
+#define AKNANO_FLASH_OFF_TUF_ROLE_TIMESTAMP    (AKNANO_FLASH_OFF_TUF_ROLES_BASE + (AKNANO_TUF_METADATA_MAX_SIZE * 2))
+#define AKNANO_FLASH_OFF_TUF_ROLE_SNAPSHOT     (AKNANO_FLASH_OFF_TUF_ROLES_BASE + (AKNANO_TUF_METADATA_MAX_SIZE * 3))
+#define AKNANO_FLASH_OFF_TUF_ROLE_TARGETS      (AKNANO_FLASH_OFF_TUF_ROLES_BASE + (AKNANO_TUF_METADATA_MAX_SIZE * 4))
 
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
 #define AKNANO_FLASH_OFF_IS_DEVICE_REGISTERED AKNANO_FLASH_OFF_STATE_BASE + sizeof(int) * 2 + AKNANO_MAX_UPDATE_CORRELATION_ID_LENGTH
 #endif
 
-// #define AKNANO_FLASH_OFF_ID_TAG 4096 + 256 * 4
-// #define AKNANO_NVS_ID_LAST_APPLIED_TAG 8
-// #define AKNANO_NVS_ID_LAST_CONFIRMED_TAG 9
-// #define AKNANO_FLASH_OFF_POLLING_INTERVAL 256 * 5
-
+/*
+ * Altualizr-nano event fields
+ */
 
 #define AKNANO_EVENT_DOWNLOAD_STARTED "EcuDownloadStarted"
 #define AKNANO_EVENT_DOWNLOAD_COMPLETED "EcuDownloadCompleted"
@@ -118,6 +125,9 @@
 #define AKNANO_EVENT_SUCCESS_FALSE 1
 #define AKNANO_EVENT_SUCCESS_TRUE 2
 
+/*
+ * Generic ANSI colors escape codes, used in console output
+ */
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_YELLOW  "\x1b[33m"
@@ -126,6 +136,8 @@
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
+
+#define AKNANO_SHA256_LEN 32
 
 #ifdef AKNANO_ENABLE_EL2GO
 #define AKNANO_PROVISIONING_MODE "EdgeLock 2GO Managed"
@@ -137,7 +149,6 @@
 #endif
 #endif
 
-#define TUF_DATA_BUFFER_LEN 10 * 1024
 extern unsigned char tuf_data_buffer[TUF_DATA_BUFFER_LEN];
 
 enum aknano_response {
@@ -151,7 +162,6 @@ enum aknano_response {
     AKNANO_CANCEL_UPDATE,
 };
 
-
 struct aknano_target {
     char    updatedAt[AKNANO_MAX_UPDATE_AT_LENGTH];
     size_t  expected_size;
@@ -159,32 +169,15 @@ struct aknano_target {
     uint8_t expected_hash[AKNANO_SHA256_LEN];
 };
 
-// struct aknano_json_data {
-//     size_t offset;
-//     uint8_t data[AKNANO_JSON_BUFFER_SIZE];
-//     struct aknano_target selected_target;
-// };
-
-struct aknano_download {
-    int    download_status;
-    int    download_progress;
-    size_t downloaded_size;
-    size_t http_content_size;
-};
-
-
 /* Settings are kept between iterations */
 struct aknano_settings {
     char        tag[AKNANO_MAX_TAG_LENGTH];
-    // char device_priv_key[AKNANO_CERT_BUF_SIZE];
     char        device_name[AKNANO_MAX_DEVICE_NAME_SIZE];
     char        uuid[AKNANO_MAX_UUID_LENGTH];
     char        serial[AKNANO_MAX_SERIAL_LENGTH];
-    // char factory_name[AKNANO_MAX_FACTORY_NAME_LENGTH];
     uint32_t    running_version;
     int         last_applied_version;
     int         last_confirmed_version;
-    // char running_tag[AKNANO_MAX_TAG_LENGTH];
     int         polling_interval;
     time_t      boot_up_epoch;
     char        ongoing_update_correlation_id[AKNANO_MAX_UPDATE_CORRELATION_ID_LENGTH];
@@ -201,24 +194,8 @@ struct aknano_network_context;
 
 /* Context is not kept between iterations */
 struct aknano_context {
-    int                            sock;
-    int32_t                        action_id;
-    uint8_t                        response_data[RESPONSE_BUFFER_SIZE];
-    // struct aknano_json_data aknano_json_data;
-    int32_t                        json_action_id;
-    size_t                         url_buffer_size;
-    size_t                         status_buffer_size;
-    struct aknano_download         dl;
-    // struct http_request http_req;
-    // struct flash_img_context flash_ctx;
     uint8_t                        url_buffer[URL_BUFFER_SIZE];
-    uint8_t                        status_buffer[STATUS_BUFFER_SIZE];
-    uint8_t                        recv_buf_tcp[RECV_BUFFER_SIZE];
-    enum aknano_response           code_status;
-
-    int                            json_pasring_bracket_level;
     struct aknano_settings *       settings; /* TODO: may not always be set yet */
-
     struct aknano_target           selected_target;
 
     /* Connection to the device gateway */
@@ -228,44 +205,8 @@ struct aknano_context {
 };
 
 
-/**
- * @brief The length of the HTTP GET method.
- */
-#define httpexampleHTTP_METHOD_GET_LENGTH                    (sizeof(HTTP_METHOD_GET) - 1)
-
-/**
- * @brief Field name of the HTTP range header to read from server response.
- */
-#define httpexampleHTTP_CONTENT_RANGE_HEADER_FIELD           "Content-Range"
-
-/**
- * @brief Length of the HTTP range header field.
- */
-#define httpexampleHTTP_CONTENT_RANGE_HEADER_FIELD_LENGTH    (sizeof(httpexampleHTTP_CONTENT_RANGE_HEADER_FIELD) - 1)
-
-/**
- * @brief The HTTP status code returned for partial content.
- */
-#define httpexampleHTTP_STATUS_CODE_PARTIAL_CONTENT          206
-
-
-#define democonfigRANGE_REQUEST_LENGTH  4096 * 4
-#define democonfigUSER_BUFFER_LENGTH democonfigRANGE_REQUEST_LENGTH + 1024
-
-/**
- * @brief Number of milliseconds in a second.
- */
-#define NUM_MILLISECONDS_IN_SECOND                  (1000U)
-
-/**
- * @brief Milliseconds per second.
- */
-#define MILLISECONDS_PER_SECOND                     (1000U)
-
-/**
- * @brief Milliseconds per FreeRTOS tick.
- */
-#define MILLISECONDS_PER_TICK                       (MILLISECONDS_PER_SECOND / configTICK_RATE_HZ)
+#define AKNANO_IMAGE_DOWNLOAD_REQUEST_LENGTH  4096 * 4
+#define AKNANO_IMAGE_DOWNLOAD_BUFFER_LENGTH AKNANO_IMAGE_DOWNLOAD_REQUEST_LENGTH + 1024
 
 /**
  * @brief Each compilation unit that consumes the NetworkContext must define it.
@@ -312,7 +253,6 @@ void aknano_mtls_disconnect(struct aknano_network_context *network_context);
 
 int aknano_download_and_flash_image(struct aknano_context *aknano_context);
 void aknano_update_settings_in_flash(struct aknano_settings *aknano_settings);
-long unsigned int aknano_get_time(void);
 bool aknano_send_event(struct aknano_settings *aknano_settings, const char *event_type, int version, int success);
 
 int aknano_poll(struct aknano_context *aknano_context);
@@ -320,7 +260,7 @@ int aknano_poll(struct aknano_context *aknano_context);
 void aknano_init_settings(struct aknano_settings *aknano_settings);
 
 
-extern uint8_t ucUserBuffer[democonfigUSER_BUFFER_LENGTH];
+extern uint8_t ucUserBuffer[AKNANO_IMAGE_DOWNLOAD_BUFFER_LENGTH];
 BaseType_t aknano_connect_to_device_gateway(struct aknano_network_context *network_context);
 
 BaseType_t aknano_send_http_request(struct aknano_network_context *network_context, const char *pcMethod, const char *pcPath, const char *pcBody, size_t xBodyLen, struct aknano_settings *aknano_settings);

@@ -27,9 +27,6 @@ int aknano_provision_device()
 
     int ret = 0;
 
-#ifndef AKNANO_ENABLE_EL2GO
-    int offset;
-#endif
     char uuid[AKNANO_MAX_UUID_LENGTH];
     char serial[AKNANO_MAX_SERIAL_LENGTH];
     // char temp_buf[257];
@@ -51,38 +48,15 @@ int aknano_provision_device()
     }
 #endif
 
-    // ReadFlashStorage(AKNANO_FLASH_OFF_DEV_UUID, temp_buf, FLASH_PAGE_SIZE);
+    // aknano_read_flash_storage(AKNANO_FLASH_OFF_DEV_UUID, temp_buf, 256);
+    // temp_buf[256] = 0;
     // LogInfo(("BEFORE uuid=%s", temp_buf));
 
-    // ReadFlashStorage(AKNANO_FLASH_OFF_DEV_SERIAL, temp_buf, FLASH_PAGE_SIZE);
+    // aknano_read_flash_storage(AKNANO_FLASH_OFF_DEV_SERIAL, temp_buf, 256);
+    // temp_buf[256] = 0;
     // LogInfo(("BEFORE serial=%s", temp_buf));
 
-    // ReadFlashStorage(AKNANO_FLASH_OFF_DEV_CERTIFICATE, temp_buf, FLASH_PAGE_SIZE);
-    // LogInfo(("BEFORE cert=%s", temp_buf));
-
-    // ReadFlashStorage(AKNANO_FLASH_OFF_DEV_CERTIFICATE, temp_buf, FLASH_PAGE_SIZE);
-    // LogInfo(("BEFORE cert=%s", temp_buf));
-
-    // ReadFlashStorage(AKNANO_FLASH_OFF_DEV_KEY, temp_buf, FLASH_PAGE_SIZE);
-    // LogInfo(("BEFORE key=%s", temp_buf));
-
-    // Save Cert, Key, UUID and Serial to flash
-
-#ifdef AKNANO_ENABLE_EL2GO
-    aknano_store_provisioning_data(uuid, serial, NULL, NULL);
-#else
-    aknano_store_provisioning_data(uuid, serial, cert_buf, key_buf);
-#endif
-
-    // ReadFlashStorage(AKNANO_FLASH_OFF_DEV_CERTIFICATE, temp_buf, FLASH_PAGE_SIZE);
-    // LogInfo(("AFTER [%x] cert=%s", temp_buf[0], temp_buf));
-
-    // ReadFlashStorage(AKNANO_FLASH_OFF_DEV_CERTIFICATE, temp_buf, FLASH_PAGE_SIZE);
-    // LogInfo(("AFTER cert=%s", temp_buf));
-
-    // aknano_read_flash_storage(AKNANO_FLASH_OFF_DEV_KEY, temp_buf, 256);
-    // temp_buf[256] = 0;
-    // LogInfo(("AFTER key=%s", temp_buf));
+    aknano_save_uuid_and_serial(uuid, serial);
 
     // aknano_read_flash_storage(AKNANO_FLASH_OFF_DEV_UUID, temp_buf, 256);
     // temp_buf[256] = 0;
@@ -101,7 +75,7 @@ int aknano_provision_device()
     vDevModeKeyProvisioning_AkNano((uint8_t *)key_buf,
                                    (uint8_t *)cert_buf);
     LogInfo(("Provisioning done"));
-    vTaskDelay(pdMS_TO_TICKS(2000));
+    vTaskDelay(pdMS_TO_TICKS(5000));
 #endif
     return ret;
 }
