@@ -46,8 +46,8 @@ TEST(Full_AKNano, akNano_TestFlashAccess){
     for (i = 0; i < sizeof(new_data); i++)
         new_data[i] = i;
 
-    ret = aknano_update_flash_storage(AKNANO_FLASH_OFF_STATE_BASE,
-                                 new_data);
+    ret = aknano_write_data_to_storage(AKNANO_FLASH_OFF_STATE_BASE,
+                                 new_data, sizeof(new_data));
 
     TEST_ASSERT(ret == kStatus_Success);
     ret = aknano_read_flash_storage(AKNANO_FLASH_OFF_STATE_BASE,
@@ -58,8 +58,8 @@ TEST(Full_AKNano, akNano_TestFlashAccess){
     for (i = 0; i < sizeof(new_data); i++)
         TEST_ASSERT(new_data[i] == i);
 
-    ret = aknano_update_flash_storage(AKNANO_FLASH_OFF_STATE_BASE,
-                                 original_data);
+    ret = aknano_write_data_to_storage(AKNANO_FLASH_OFF_STATE_BASE,
+                                 original_data, sizeof(original_data));
 
     TEST_ASSERT(ret == kStatus_Success);
 

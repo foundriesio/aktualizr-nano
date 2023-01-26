@@ -84,6 +84,7 @@
 #define AKNANO_MAX_UPDATE_CORRELATION_ID_LENGTH 100
 // #define AKNANO_MAX_TAG_LENGTH 20
 
+#define AKNANO_MAX_FIRMWARE_SIZE 0x100000
 
 #define AKNANO_FLASH_OFF_DEV_CERTIFICATE 0
 #define AKNANO_FLASH_OFF_DEV_KEY 2048
@@ -298,8 +299,8 @@ struct aknano_network_context {
 /**/
 status_t aknano_init_flash_storage();
 status_t aknano_read_flash_storage(int offset, void *output, size_t outputMaxLen);
-status_t aknano_update_flash_storage(int offset, void *data);
 status_t aknano_write_data_to_flash(int offset, const void *data, size_t data_len);
+status_t aknano_write_data_to_storage(int offset, const void *data, size_t data_len);
 
 int init_network_context(struct aknano_network_context *network_context);
 
@@ -346,11 +347,9 @@ CK_RV prvDestroyDefaultCryptoObjects(void);
 #endif
 
 #ifdef AKNANO_ALLOW_PROVISIONING
-status_t aknano_clear_flash_sector(int offset);
-status_t aknano_write_flash_page(int offset, const void *data);
-
 void vDevModeKeyProvisioning_AkNano(uint8_t *client_key, uint8_t *client_certificate);
 int aknano_provision_device();
+status_t aknano_store_provisioning_data(const char *uuid, const char *serial, char *cert_buf, const char *key_buf);
 #endif
 
 bool is_valid_certificate_available(bool);

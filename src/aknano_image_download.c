@@ -86,7 +86,7 @@ static BaseType_t prvConnectToDownloadServer(NetworkContext_t *pxNetworkContext)
     return xStatus;
 }
 
-static int HandleReceivedData(const unsigned char *data, int offset, int dataLen, uint32_t partition_log_addr, uint32_t partition_size)
+static int HandleReceivedData(const unsigned char *data, int offset, int data_len, int partition_phys_addr)
 {
 #ifdef AKNANO_DRY_RUN
     LogInfo(("** Dry run mode, skipping flash operations"));
@@ -94,91 +94,20 @@ static int HandleReceivedData(const unsigned char *data, int offset, int dataLen
 #endif
     int32_t retval = 0;
 
-    uint32_t partition_phys_addr;
+    LogInfo(("Writing image chunk to flash. offset=%d len=%d", offset, data_len));
 
-    uint32_t chunk_flash_addr;
-    int32_t chunk_len;
-
-    uint32_t next_erase_addr;
-
-    /* Page buffers */
-    uint32_t page_size;
-
-    /* Received/processed data counter */
-    uint32_t total_processed = 0;
-
-    /* Preset result code to indicate "no error" */
-    int32_t mflash_result = 0;
-
-    unsigned char page_buffer[MFLASH_PAGE_SIZE];
-
-    LogInfo(("Writing image chunk to flash. offset=%d len=%d", offset, dataLen));
-    page_size = MFLASH_PAGE_SIZE;
-
-    /* Obtain physical address of FLASH to perform operations with */
-    // partition_phys_addr = mflash_drv_log2phys((void *)partition_log_addr, partition_size);
-    partition_phys_addr = partition_log_addr - BOOT_FLASH_BASE;
-    if (partition_phys_addr == MFLASH_INVALID_ADDRESS) {
-        LogError(("HandleReceivedData: Invalid partition_log_addr=0x%X", (int)partition_log_addr));
-        return -1;
-    }
-
-    if (!mflash_drv_is_sector_aligned(partition_phys_addr) || !mflash_drv_is_sector_aligned(partition_size)) {
+    if (!mflash_drv_is_sector_aligned(partition_phys_addr)) {
         LogError(("store_update_image: partition not aligned"));
         return -1;
     }
 
-    /* Pre-set address of area not erased so far */
-    next_erase_addr = partition_phys_addr + offset;
-    chunk_flash_addr = partition_phys_addr + offset;
-    total_processed = 0;
+    if (offset + data_len >= AKNANO_MAX_FIRMWARE_SIZE) {
+        LogError(("store_update_image: AKNANO_MAX_FIRMWARE_SIZE boundary exceeded"));
+        retval = -1;
+        return -1;
+    }
 
-    do{
-        /* The data is epxected for be received by page sized chunks (except for the last one) */
-        int remaining_bytes = dataLen - total_processed;
-        if (remaining_bytes < MFLASH_PAGE_SIZE)
-            chunk_len = remaining_bytes;
-        else
-            chunk_len = MFLASH_PAGE_SIZE;
-
-        memcpy(page_buffer, data + total_processed, chunk_len);
-
-        if (chunk_len > 0) {
-            if (chunk_flash_addr >= partition_phys_addr + partition_size) {
-                /* Partition boundary exceeded */
-                LogError(("store_update_image: partition boundary exceedded"));
-                retval = -1;
-                break;
-            }
-
-            /* Perform erase when encountering next sector */
-            if (chunk_flash_addr >= next_erase_addr) {
-                mflash_result = mflash_drv_sector_erase(next_erase_addr);
-                if (mflash_result != 0) {
-                    LogError(("store_update_image: Error erasing sector %ld", mflash_result));
-                    break;
-                }
-                next_erase_addr += MFLASH_SECTOR_SIZE;
-            }
-
-            /* Clear the unused portion of the buffer (applicable to the last chunk) */
-            if (chunk_len < page_size)
-                memset((uint8_t *)page_buffer + chunk_len, 0xff, page_size - chunk_len);
-
-            /* Program the page */
-            mflash_result = mflash_drv_page_program(chunk_flash_addr, (uint32_t *)page_buffer);
-            if (mflash_result != 0) {
-                LogError(("store_update_image: Error storing page %ld", mflash_result));
-                break;
-            }
-
-            total_processed += chunk_len;
-            chunk_flash_addr += chunk_len;
-
-            // LogInfo(("store_update_image: processed %i bytes", total_processed));
-        }
-    } while (chunk_len == page_size);
-    // LogInfo(("Chunk writen. offset=%d len=%d total_processed=%ld", offset, dataLen, total_processed));
+    retval = aknano_write_data_to_flash(partition_phys_addr + offset, data, data_len);
     return retval;
 }
 
@@ -250,15 +179,15 @@ static BaseType_t prvDownloadFile(NetworkContext_t *pxNetworkContext,
     size_t xNumReqBytes = 0;
     /* xCurByte indicates which starting byte we want to download next. */
     size_t xCurByte = 0;
-    uint32_t dstAddr;
+    uint32_t dst_partition_phys_addr;
     uint8_t sha256_bytes[AKNANO_SHA256_LEN];
 
     if (image_position == 0x01)
-        dstAddr = FLASH_AREA_IMAGE_2_OFFSET;
+        dst_partition_phys_addr = FLASH_AREA_IMAGE_2_OFFSET;
     else if (image_position == 0x02)
-        dstAddr = FLASH_AREA_IMAGE_1_OFFSET;
+        dst_partition_phys_addr = FLASH_AREA_IMAGE_1_OFFSET;
     else
-        dstAddr = FLASH_AREA_IMAGE_2_OFFSET;
+        dst_partition_phys_addr = FLASH_AREA_IMAGE_2_OFFSET;
 
     configASSERT(pcPath != NULL);
 
@@ -348,11 +277,8 @@ static BaseType_t prvDownloadFile(NetworkContext_t *pxNetworkContext,
             LogDebug(("Response Body Len: %d",
                       (int)xResponse.bodyLen));
             if (xStatus == pdPASS) {
-                // FIXME
-#define MAX_FIRMWARE_SIZE 0x100000
-
                 mbedtls_sha256_update(&aknano_context->sha256_context, xResponse.pBody, xResponse.bodyLen);
-                if (HandleReceivedData(xResponse.pBody, xCurByte, xResponse.bodyLen, dstAddr + BOOT_FLASH_BASE, MAX_FIRMWARE_SIZE) < 0) {
+                if (HandleReceivedData(xResponse.pBody, xCurByte, xResponse.bodyLen, dst_partition_phys_addr) < 0) {
                     LogError(("Error during HandleReceivedData"));
                     xStatus = pdFAIL;
                     break;

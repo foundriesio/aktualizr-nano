@@ -93,7 +93,7 @@ int tuf_client_write_local_file(enum tuf_role role, const unsigned char *data, s
 
     initial_offset = get_flash_offset_for_role(role);
     // LogInfo(("write_local_file: role=%d initial_offset=%d len=%d", role, initial_offset, len));
-    ret = aknano_write_data_to_flash(initial_offset, data, len);
+    ret = aknano_write_data_to_storage(initial_offset, data, len);
     LogInfo((ANSI_COLOR_MAGENTA "tuf_client_write_local_file: role=%s len=%d %s" ANSI_COLOR_RESET, tuf_get_role_name(role), len, ret? "ERROR" : "OK"));
 
     return ret;
