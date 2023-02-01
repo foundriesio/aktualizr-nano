@@ -18,5 +18,6 @@
 #define log_error LogError
 
 #define TUF_SIGNATURES_PER_ROLE_MAX_COUNT 2
+#define TUF_ENABLE_ED25519
 
 #endif
