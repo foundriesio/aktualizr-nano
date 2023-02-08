@@ -57,11 +57,11 @@
 
 
 #include "aknano_secret.h"
-static const char donwloadServer_ROOT_CERTIFICATE_PEM[] = AKNANO_DEVICE_GATEWAY_CERTIFICATE;
+static const char downloadServer_ROOT_CERTIFICATE_PEM[] = AKNANO_DEVICE_GATEWAY_CERTIFICATE;
 
 #define AKNANO_DOWNLOAD_ENDPOINT_LEN sizeof(AKNANO_DOWNLOAD_ENDPOINT) - 1
 
-static const uint32_t donwloadServer_ROOT_CERTIFICATE_LENGTH = sizeof(donwloadServer_ROOT_CERTIFICATE_PEM);
+static const uint32_t donwloadServer_ROOT_CERTIFICATE_LENGTH = sizeof(downloadServer_ROOT_CERTIFICATE_PEM);
 
 
 static BaseType_t prvConnectToDownloadServer(NetworkContext_t *pxNetworkContext)
@@ -81,7 +81,7 @@ static BaseType_t prvConnectToDownloadServer(NetworkContext_t *pxNetworkContext)
     xSocketsConfig.pAlpnProtos = NULL;
     xSocketsConfig.maxFragmentLength = 0;
     xSocketsConfig.disableSni = false;
-    xSocketsConfig.pRootCa = donwloadServer_ROOT_CERTIFICATE_PEM;
+    xSocketsConfig.pRootCa = downloadServer_ROOT_CERTIFICATE_PEM;
     xSocketsConfig.rootCaSize = donwloadServer_ROOT_CERTIFICATE_LENGTH;
     xSocketsConfig.sendTimeoutMs = 1000;
     xSocketsConfig.recvTimeoutMs = 1000;
@@ -317,7 +317,6 @@ static BaseType_t prvDownloadFile(NetworkContext_t *pxNetworkContext,
 
             xStatus = (xResponse.statusCode == httpexampleHTTP_STATUS_CODE_PARTIAL_CONTENT) ? pdPASS : pdFAIL;
         } else {
-            // It is normal to get in here, because of the current server sinalization that the connection will be closed
             LogError(("An error occurred in downloading the file. "
                       "Failed to send HTTP GET request to %s %s: Error=%s.",
                       "binary download server", pcPath, HTTPClient_strerror(xHTTPStatus)));
@@ -364,7 +363,7 @@ static BaseType_t prvDownloadFile(NetworkContext_t *pxNetworkContext,
             LogError(("Image validation failed magic=0x%X", ih->ih_magic));
             return false;
         } else {
-            LogInfo(("Image validation succeded"));
+            LogInfo(("Image validation succeeded"));
             return true;
         }
 #endif
