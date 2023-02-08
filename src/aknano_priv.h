@@ -238,6 +238,8 @@ struct aknano_network_context {
 
 
 /**/
+void aknano_update_settings_in_flash(struct aknano_settings *aknano_settings);
+
 status_t aknano_init_flash_storage();
 status_t aknano_read_flash_storage(int offset, void *output, size_t outputMaxLen);
 status_t aknano_write_data_to_flash(int offset, const void *data, size_t data_len);

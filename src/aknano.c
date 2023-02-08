@@ -50,22 +50,6 @@ void aknano_dump_memory_info(const char *context)
 }
 #endif
 
-void aknano_update_settings_in_flash(struct aknano_settings *aknano_settings)
-{
-    char flashPageBuffer[256];
-
-    memset(flashPageBuffer, 0, sizeof(flashPageBuffer));
-    memcpy(flashPageBuffer, &aknano_settings->last_applied_version, sizeof(int));
-    memcpy(flashPageBuffer + sizeof(int), &aknano_settings->last_confirmed_version, sizeof(int));
-    memcpy(flashPageBuffer + sizeof(int) * 2, aknano_settings->ongoing_update_correlation_id,
-           sizeof(aknano_settings->ongoing_update_correlation_id));
-#ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
-    flashPageBuffer[sizeof(int) * 2 + sizeof(aknano_settings->ongoing_update_correlation_id)] =
-        aknano_settings->is_device_registered;
-#endif
-    LogInfo(("Writing settings to flash..."));
-    aknano_write_data_to_storage(AKNANO_FLASH_OFF_STATE_BASE, flashPageBuffer, sizeof(flashPageBuffer));
-}
 
 void aknano_init_settings(struct aknano_settings *aknano_settings)
 {
