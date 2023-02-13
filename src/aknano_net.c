@@ -17,7 +17,6 @@
 #include "libtufnano.h"
 
 #include "netif/ethernet.h"
-#include "enet_ethernetif.h"
 #include "lwip/netifapi.h"
 
 
