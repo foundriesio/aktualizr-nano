@@ -39,9 +39,6 @@ uint8_t ucUserBuffer[AKNANO_IMAGE_DOWNLOAD_BUFFER_LENGTH];
  */
 // static uint32_t ulGlobalEntryTimeMs;
 
-static struct aknano_settings xaknano_settings;
-static struct aknano_context xaknano_context;
-
 #ifdef AKNANO_DUMP_MEMORY_USAGE_INFO
 void aknano_dump_memory_info(const char *context)
 {
@@ -256,7 +253,7 @@ bool is_device_serial_set()
 extern bool el2go_agent_stopped;
 #endif
 
-static void aknano_init(struct aknano_settings *aknano_settings)
+void aknano_init(struct aknano_settings *aknano_settings)
 {
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
     bool registrationOk;
@@ -342,13 +339,16 @@ static void aknano_init(struct aknano_settings *aknano_settings)
 #endif
 }
 
-static void aknano_init_context(struct aknano_context * aknano_context,
-                                struct aknano_settings *aknano_settings)
+void aknano_log_running_mode()
 {
-    memset(aknano_context, 0, sizeof(*aknano_context));
-    aknano_context->settings = aknano_settings;
+    LogInfo((ANSI_COLOR_YELLOW "start_aknano mode '" AKNANO_PROVISIONING_MODE "'" ANSI_COLOR_RESET));
+#ifdef AKNANO_RESET_DEVICE_ID
+    LogInfo((ANSI_COLOR_YELLOW "Reset of device provisioned data is enabled" ANSI_COLOR_RESET));
+#endif
+#ifdef AKNANO_ALLOW_PROVISIONING
+    LogInfo((ANSI_COLOR_YELLOW "Provisioning support is enabled" ANSI_COLOR_RESET));
+#endif
 }
-
 
 /**
  * @brief Entry point of aktualizr-nano
@@ -359,8 +359,6 @@ int start_aknano(bool                         xAwsIotMqttMode,
                  void *                       pNetworkCredentialInfo,
                  const IotNetworkInterface_t *pxNetworkInterface)
 {
-    int sleepTime;
-
     (void)xAwsIotMqttMode;
     (void)pIdentifier;
     (void)pNetworkServerInfo;
@@ -374,32 +372,7 @@ int start_aknano(bool                         xAwsIotMqttMode,
     vTaskDelay(pdMS_TO_TICKS(1000));
 #endif
 
-    LogInfo((ANSI_COLOR_YELLOW "start_aknano mode '" AKNANO_PROVISIONING_MODE "'" ANSI_COLOR_RESET));
-#ifdef AKNANO_RESET_DEVICE_ID
-    LogInfo((ANSI_COLOR_YELLOW "Reset of device provisioned data is enabled" ANSI_COLOR_RESET));
-#endif
-#ifdef AKNANO_ALLOW_PROVISIONING
-    LogInfo((ANSI_COLOR_YELLOW "Provisioning support is enabled" ANSI_COLOR_RESET));
-#endif
-
-    aknano_init(&xaknano_settings);
-    while (true) {
-#ifdef AKNANO_DUMP_MEMORY_USAGE_INFO
-        aknano_dump_memory_info("Before aknano poll");
-#endif
-        aknano_init_context(&xaknano_context, &xaknano_settings);
-        aknano_poll(&xaknano_context);
-        sleepTime = xaknano_settings.polling_interval * 1000;
-        if (sleepTime < 5000)
-            sleepTime = 5000;
-        else if (sleepTime > 60 * 60 * 1000)
-            sleepTime = 60 * 60 * 1000;
-
-#ifdef AKNANO_DUMP_MEMORY_USAGE_INFO
-        aknano_dump_memory_info("After aknano poll");
-#endif
-        LogInfo(("Sleeping %d ms\n\n", sleepTime));
-        vTaskDelay(pdMS_TO_TICKS(sleepTime));
-    }
+    aknano_log_running_mode();
+    aknano_sample_loop();
     return 0;
 }

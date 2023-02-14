@@ -3,6 +3,7 @@ include_guard(GLOBAL)
 message("middleware_aktualizr-nano component is included.")
 
 target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/src/aknano_api.c
     ${CMAKE_CURRENT_LIST_DIR}/src/aknano_device_gateway.c
     ${CMAKE_CURRENT_LIST_DIR}/src/aknano_targets_manifest.c
     ${CMAKE_CURRENT_LIST_DIR}/src/aknano_flash_storage.c
