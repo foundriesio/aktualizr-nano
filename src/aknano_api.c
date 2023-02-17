@@ -14,6 +14,7 @@
 #include "lwip/apps/sntp.h"
 #include "sntp_example.h"
 #include "lwip/netif.h"
+#include "ini.h"
 
 #include "aknano_priv.h"
 #include "aknano_secret.h"
@@ -39,6 +40,41 @@ static void fill_network_info(char *output, size_t max_length)
     LogInfo(("fill_network_info: %s", output));
 }
 
+static int toml_handler(void *user, const char *section, const char *name,
+                        const char *value)
+{
+    struct aknano_settings *aknano_settings = (struct aknano_settings *)user;
+
+#define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
+    LogInfo(("handler %s.%s=%s", section, name, value));
+    if (MATCH("pacman", "tags")) {
+        strncpy(aknano_settings->tag, value + 1, sizeof(aknano_settings->tag));
+        aknano_settings->tag[strlen(aknano_settings->tag) - 1] = 0; /* strip last " */
+    }
+    return 1;
+}
+
+static void replace_escaped_chars(char *dst, const char *src, size_t len)
+{
+    const char *p;
+    char *d;
+
+    for (p = src, d = dst; p < (src + len); p++) {
+        if (*p == '\\' && p < (src + len - 1)) {
+            switch (*(p + 1)) {
+            case 'n': *(d++) = '\n'; break;
+            case 'r': *(d++) = '\r'; break;
+            case '"': *(d++) = '"'; break;
+            case '\\': *(d++) = '\\'; break;
+            }
+            p++;
+        } else {
+            *(d++) = *p;
+        }
+    }
+    *d = 0;
+}
+
 static void parse_config(const char *config_data, int buffer_len, struct aknano_settings *aknano_settings)
 {
     JSONStatus_t result = JSON_Validate(config_data, buffer_len);
@@ -47,21 +83,17 @@ static void parse_config(const char *config_data, int buffer_len, struct aknano_
     int int_value;
 
     if (result == JSONSuccess) {
-        result = JSON_Search(config_data, buffer_len,
-                             "tag" TUF_JSON_QUERY_KEY_SEPARATOR "Value", strlen("tag" TUF_JSON_QUERY_KEY_SEPARATOR "Value"),
-                             &value, &valueLength);
+        static char unescaped_toml[200];
 
-        if (result == JSONSuccess) {
-            if (strncmp(value, aknano_settings->tag, valueLength)) {
-                LogInfo(("parse_config_data: Tag has changed ('%s' => '%.*s')",
-                         aknano_settings->tag,
-                         valueLength, value));
-                strncpy(aknano_settings->tag, value,
-                        valueLength);
-                aknano_settings->tag[valueLength] = '\0';
-            }
+        memset(unescaped_toml, 0, sizeof(unescaped_toml));
+        result = JSON_Search(config_data, buffer_len,
+                             "z-50-fioctl.toml" TUF_JSON_QUERY_KEY_SEPARATOR "Value", strlen("z-50-fioctl.toml" TUF_JSON_QUERY_KEY_SEPARATOR "Value"),
+                             &value, &valueLength);
+        if (valueLength < sizeof(unescaped_toml)) {
+            replace_escaped_chars(unescaped_toml, value, valueLength);
+            ini_parse_string(unescaped_toml, toml_handler, aknano_settings);
         } else {
-            LogInfo(("parse_config_data: Tag config not found"));
+            LogWarn(("z-50-fioctl.toml too big, skipping parsing. Size=%ld, limit=%ld", valueLength, sizeof(unescaped_toml)));
         }
 
         result = JSON_Search(config_data, buffer_len,
@@ -134,6 +166,7 @@ int aknano_checkin(struct aknano_context *aknano_context)
             if (network_context.reply_body == NULL)
                 LogInfo(("Device has no config set"));
             else
+                // network_context.reply_body[network_context.reply_body_len] = 0;
                 parse_config((const char *)network_context.reply_body, network_context.reply_body_len, aknano_context->settings);
         }
 
