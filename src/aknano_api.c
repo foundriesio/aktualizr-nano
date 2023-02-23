@@ -16,6 +16,7 @@
 #include "lwip/netif.h"
 #include "ini.h"
 
+#include "aknano_client.h"
 #include "aknano_priv.h"
 #include "aknano_secret.h"
 #include "flexspi_flash_config.h"
@@ -142,8 +143,6 @@ int aknano_checkin(struct aknano_context *aknano_context)
 
     struct aknano_network_context network_context;
     BaseType_t xDemoStatus;
-    bool is_update_required = false;
-    bool is_reboot_required = false;
     struct aknano_settings *aknano_settings = aknano_context->settings;
     int tuf_ret = 0;
 
@@ -213,6 +212,13 @@ int aknano_checkin(struct aknano_context *aknano_context)
 #endif
         aknano_context->dg_network_context = &network_context;
 
+#ifdef AKNANO_TEST_ROLLBACK
+#warning "Compiling broken image for rollback test"
+        LogError((ANSI_COLOR_RED "This is a rollback test. Rebooting in 5 seconds" ANSI_COLOR_RESET));
+        vTaskDelay(pdMS_TO_TICKS(5000));
+        NVIC_SystemReset();
+#endif
+
 #ifdef AKNANO_ALLOW_PROVISIONING
         if (!tuf_root_is_provisioned) {
             tuf_ret = aknano_provision_tuf_root(aknano_context);
@@ -221,6 +227,11 @@ int aknano_checkin(struct aknano_context *aknano_context)
 #endif
         if (tuf_ret == 0) {
             tuf_ret = tuf_refresh(aknano_context, reference_time, tuf_data_buffer, sizeof(tuf_data_buffer));
+            if (tuf_ret == TUF_SUCCESS) {
+                /* Wait for a successful tuf refresh before marking image as permanent */
+                aknano_set_image_confirmed();
+                aknano_send_installation_finished_event(aknano_settings);
+            }
             LogInfo((ANSI_COLOR_MAGENTA "tuf_refresh %s (%d)" ANSI_COLOR_RESET, tuf_get_error_string(tuf_ret), tuf_ret));
         }
 
@@ -247,19 +258,19 @@ bool aknano_install_selected_target(struct aknano_context *aknano_context)
 
     aknano_send_event(aknano_context->settings, AKNANO_EVENT_DOWNLOAD_STARTED,
                       aknano_context->selected_target.version,
-                      AKNANO_EVENT_SUCCESS_UNDEFINED);
+                      true);
     if (aknano_download_and_flash_image(aknano_context)) {
         aknano_send_event(aknano_context->settings, AKNANO_EVENT_DOWNLOAD_COMPLETED,
                           aknano_context->selected_target.version,
-                          AKNANO_EVENT_SUCCESS_TRUE);
+                          true);
         aknano_send_event(aknano_context->settings, AKNANO_EVENT_INSTALLATION_STARTED,
                           aknano_context->selected_target.version,
-                          AKNANO_EVENT_SUCCESS_UNDEFINED);
+                          true);
 
         aknano_settings->last_applied_version = aknano_context->selected_target.version;
         aknano_send_event(aknano_context->settings, AKNANO_EVENT_INSTALLATION_APPLIED,
                           aknano_context->selected_target.version,
-                          AKNANO_EVENT_SUCCESS_TRUE);
+                          true);
 
         LogInfo(("Requesting update on next boot (ReadyForTest)"));
         status_t status;
@@ -271,7 +282,7 @@ bool aknano_install_selected_target(struct aknano_context *aknano_context)
     } else {
         aknano_send_event(aknano_context->settings, AKNANO_EVENT_DOWNLOAD_COMPLETED,
                           aknano_context->selected_target.version,
-                          AKNANO_EVENT_SUCCESS_FALSE);
+                          false);
     }
 
     aknano_update_settings_in_flash(aknano_settings);

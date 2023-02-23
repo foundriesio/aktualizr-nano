@@ -126,75 +126,73 @@ void aknano_init_settings(struct aknano_settings *aknano_settings)
 }
 
 // #define AKNANO_TEST_ROLLBACK
-
-static int aknano_handle_img_confirmed(struct aknano_settings *aknano_settings)
+void aknano_send_installation_finished_event(struct aknano_settings *aknano_settings)
 {
-    bool image_ok = false;
+    static bool executed_once = false;
+    bool rollback_was_performed;
+    bool running_version_reported;
+
+    if (executed_once)
+        return;
+
+    executed_once = true;
+    rollback_was_performed = aknano_settings->last_applied_version
+                             && aknano_settings->last_applied_version != aknano_settings->running_version
+                             && strnlen(aknano_settings->ongoing_update_correlation_id, AKNANO_MAX_UPDATE_CORRELATION_ID_LENGTH) > 0;
+    running_version_reported = aknano_settings->last_confirmed_version == aknano_settings->running_version;
+    LogInfo(("aknano_send_installation_finished_event: aknano_settings.ongoing_update_correlation_id='%s'", aknano_settings->ongoing_update_correlation_id));
+
+    if (!rollback_was_performed && running_version_reported)
+        return;
+
+    if (rollback_was_performed)
+        LogInfo(("A rollback was done"));
+
+    aknano_send_event(aknano_settings,
+                      AKNANO_EVENT_INSTALLATION_COMPLETED,
+                      0, !rollback_was_performed);
+    if (!rollback_was_performed) {
+        aknano_settings->last_applied_version = 0;
+        aknano_settings->last_confirmed_version = aknano_settings->running_version;
+    }
+    memset(aknano_settings->ongoing_update_correlation_id, 0,
+           sizeof(aknano_settings->ongoing_update_correlation_id));
+    aknano_update_settings_in_flash(aknano_settings);
+}
+
+void aknano_set_image_confirmed()
+{
+    static bool executed_once = false;
     uint32_t currentStatus;
+    bool image_is_permanent = false;
 
-#ifdef AKNANO_TEST_ROLLBACK
-#warning "Compiling broken image for rollback test"
-    LogError((ANSI_COLOR_RED "This is a rollback test. Rebooting in 5 seconds" ANSI_COLOR_RESET));
-    vTaskDelay(pdMS_TO_TICKS(5000));
-    NVIC_SystemReset();
-#endif
+    if (executed_once)
+        return;
 
+    vTaskDelay(pdMS_TO_TICKS(200));
     if (bl_get_image_state(&currentStatus) == kStatus_Success) {
         if (currentStatus == kSwapType_Testing) {
-            LogInfo(("Current image state is Testing. Marking as permanent"));
-            bl_update_image_state(kSwapType_Permanent);
+            LogInfo((ANSI_COLOR_GREEN "Current image state is Testing" ANSI_COLOR_RESET));
         } else if (currentStatus == kSwapType_ReadyForTest) {
-            LogInfo(("Current image state is ReadyForTest"));
+            LogInfo((ANSI_COLOR_GREEN "Current image state is ReadyForTest" ANSI_COLOR_RESET));
         } else {
-            image_ok = true;
-            LogInfo(("Current image state is Permanent"));
+            LogInfo((ANSI_COLOR_GREEN "Current image state is Permanent" ANSI_COLOR_RESET));
+            image_is_permanent = true;
         }
     } else {
-        LogWarn(("Error getting image state"));
-        image_ok = true;
+        LogWarn((ANSI_COLOR_RED "Error getting image state"));
     }
 
-    LogInfo(("aknano_settings.ongoing_update_correlation_id='%s'", aknano_settings->ongoing_update_correlation_id));
-
-    if (aknano_settings->last_applied_version
-        && aknano_settings->last_applied_version != aknano_settings->running_version
-        && strnlen(aknano_settings->ongoing_update_correlation_id, AKNANO_MAX_UPDATE_CORRELATION_ID_LENGTH) > 0) {
-        LogInfo(("A rollback was done"));
-        aknano_send_event(aknano_settings,
-                          AKNANO_EVENT_INSTALLATION_COMPLETED,
-                          -1, AKNANO_EVENT_SUCCESS_FALSE);
-        memset(aknano_settings->ongoing_update_correlation_id, 0,
-               sizeof(aknano_settings->ongoing_update_correlation_id));
-        aknano_update_settings_in_flash(aknano_settings);
+    if (!image_is_permanent) {
+        LogInfo((ANSI_COLOR_GREEN "Marking image as Permanent" ANSI_COLOR_RESET));
+        if (bl_update_image_state(kSwapType_Permanent) == kStatus_Success)
+            image_is_permanent = true;
+        else
+            LogError((ANSI_COLOR_RED "Error marking image as Permanent" ANSI_COLOR_RESET));
     }
-
-    if (!image_ok) {
-        aknano_send_event(aknano_settings, AKNANO_EVENT_INSTALLATION_COMPLETED, 0, AKNANO_EVENT_SUCCESS_TRUE);
-
-        memset(aknano_settings->ongoing_update_correlation_id, 0,
-               sizeof(aknano_settings->ongoing_update_correlation_id));
-        aknano_settings->last_applied_version = 0;
-        aknano_settings->last_confirmed_version = aknano_settings->running_version;
-        aknano_update_settings_in_flash(aknano_settings);
-    }
-
-    if (aknano_settings->last_confirmed_version != aknano_settings->running_version) {
-        // TODO: Should not be required, but doing it here because of temp/permanent bug. May not be required anymore
-        aknano_send_event(aknano_settings, AKNANO_EVENT_INSTALLATION_COMPLETED, 0, AKNANO_EVENT_SUCCESS_TRUE);
-        memset(aknano_settings->ongoing_update_correlation_id, 0,
-               sizeof(aknano_settings->ongoing_update_correlation_id));
-        aknano_settings->last_applied_version = 0;
-        aknano_settings->last_confirmed_version = aknano_settings->running_version;
-        aknano_update_settings_in_flash(aknano_settings);
-
-        LogInfo(("Updating aknano_settings->running_version in flash (%d -> %lu)",
-                 aknano_settings->last_confirmed_version, aknano_settings->running_version));
-        aknano_settings->last_confirmed_version = aknano_settings->running_version;
-        aknano_update_settings_in_flash(aknano_settings);
-    }
-
-    return 0;
+    executed_once = true;
 }
+
 #ifdef AKNANO_ALLOW_PROVISIONING
 static bool is_certificate_valid(const char *pem)
 {
@@ -309,7 +307,6 @@ void aknano_init(struct aknano_settings *aknano_settings)
     aknano_init_settings(aknano_settings);
 
     vTaskDelay(pdMS_TO_TICKS(100));
-    aknano_handle_img_confirmed(aknano_settings);
 
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
     if (!xaknano_settings.is_device_registered) {

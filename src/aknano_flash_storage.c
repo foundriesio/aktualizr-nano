@@ -143,15 +143,15 @@ int aknano_clear_provisioned_data()
     return 0;
 }
 
-status_t aknano_save_uuid_and_serial(const char *uuid, const char *serial, char *cert_buf, const char *key_buf)
+status_t aknano_save_uuid_and_serial(const char *uuid, const char *serial)
 {
-    int offset;
     char uuid_and_serial[256];
 
     aknano_clear_provisioned_data();
     memcpy(uuid_and_serial, uuid, AKNANO_MAX_UUID_LENGTH);
     memcpy(uuid_and_serial + 128, serial, AKNANO_MAX_SERIAL_LENGTH);
     aknano_write_flash_page(AKNANO_FLASH_OFF_DEV_UUID, uuid_and_serial);
+    return 0;
 }
 
 #endif

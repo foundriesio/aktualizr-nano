@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <stdio.h>
 
+#include "aknano_client.h"
 #include "aknano_priv.h"
 #include "aknano_client.h"
 #include "aknano_secret.h"
@@ -86,10 +87,9 @@ int aknano_gen_serial_and_uuid(char *uuid_string, char *serial_string)
 static bool fill_event_payload(char *payload,
                                struct aknano_settings *aknano_settings,
                                const char *event_type,
-                               int version, int success)
+                               int new_version, bool success)
 {
     int old_version = aknano_settings->running_version;
-    int new_version = version;
     char details[200];
     char current_time_str[50];
     char *correlation_id = aknano_settings->ongoing_update_correlation_id;
@@ -97,9 +97,7 @@ static bool fill_event_payload(char *payload,
     char evt_uuid[AKNANO_MAX_UUID_LENGTH], _serial_string[AKNANO_MAX_SERIAL_LENGTH];
     char *success_string;
 
-    if (success == AKNANO_EVENT_SUCCESS_UNDEFINED)
-        success_string = version < 0? "\"success\": false," : "";
-    else if (success == AKNANO_EVENT_SUCCESS_TRUE)
+    if (success)
         success_string = "\"success\": true,";
     else
         success_string = "\"success\": false,";
@@ -119,7 +117,7 @@ static bool fill_event_payload(char *payload,
         snprintf(details, sizeof(details), "Updating from v%d to v%d tag: %s. Image written to flash. Rebooting.",
                  old_version, new_version, aknano_settings->tag);
     } else if (!strcmp(event_type, AKNANO_EVENT_INSTALLATION_COMPLETED)) {
-        if (version < 0)
+        if (!success)
             snprintf(details, sizeof(details), "Rollback to v%d after failed update to v%d.",
                      old_version, aknano_settings->last_applied_version);
         else
@@ -216,7 +214,7 @@ BaseType_t aknano_send_http_request(struct aknano_network_context *network_conte
 
 bool aknano_send_event(struct aknano_settings *aknano_settings,
                        const char *event_type,
-                       int version, int success)
+                       int new_version, bool success)
 {
     struct aknano_network_context network_context;
 
@@ -233,7 +231,7 @@ bool aknano_send_event(struct aknano_settings *aknano_settings,
     if (xDemoStatus != pdPASS)
         return TRUE;
 
-    fill_event_payload(bodyBuffer, aknano_settings, event_type, version, success);
+    fill_event_payload(bodyBuffer, aknano_settings, event_type, new_version, success);
 
     LogInfo((ANSI_COLOR_YELLOW "Sending %s event" ANSI_COLOR_RESET,
              event_type));
@@ -254,5 +252,3 @@ bool aknano_send_event(struct aknano_settings *aknano_settings,
 }
 
 unsigned char tuf_data_buffer[TUF_DATA_BUFFER_LEN];
-int parse_targets_metadata(const char *data, int len, void *application_context);
-
