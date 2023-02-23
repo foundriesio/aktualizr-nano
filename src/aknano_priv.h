@@ -255,12 +255,18 @@ void aknano_mtls_disconnect(struct aknano_network_context *network_context);
 
 int aknano_download_and_flash_image(struct aknano_context *aknano_context);
 void aknano_update_settings_in_flash(struct aknano_settings *aknano_settings);
-bool aknano_send_event(struct aknano_settings *aknano_settings, const char *event_type, int version, int success);
+bool aknano_send_event(struct aknano_settings *aknano_settings, const char *event_type, int new_version, bool success);
 
-int aknano_poll(struct aknano_context *aknano_context);
-
+/* API */
 void aknano_init_settings(struct aknano_settings *aknano_settings);
+void aknano_init_context(struct aknano_context *aknano_context, struct aknano_settings *aknano_settings);
+void aknano_send_installation_finished_event(struct aknano_settings *aknano_settings);
+void aknano_set_image_confirmed();
+void aknano_init(struct aknano_settings *aknano_settings);
 
+int parse_targets_metadata(const char *data, int len, void *application_context);
+
+status_t aknano_save_uuid_and_serial(const char *uuid, const char *serial);
 
 extern uint8_t ucUserBuffer[AKNANO_IMAGE_DOWNLOAD_BUFFER_LENGTH];
 BaseType_t aknano_connect_to_device_gateway(struct aknano_network_context *network_context);
@@ -275,6 +281,7 @@ void aknano_get_ipv4_and_mac(char *ipv4, uint8_t *mac);
 
 void aknano_dump_memory_info(const char *context);
 
+void aknano_sample_loop();
 
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
 bool aknano_register_device(struct aknano_settings *aknano_settings);
