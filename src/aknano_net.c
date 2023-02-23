@@ -171,8 +171,8 @@ BaseType_t aknano_mtls_send_http_request(
     }
 
     if (xHTTPStatus == HTTPSuccess) {
-        LogInfo(("Received HTTP response from %.*s%.*s. Status Code=%u",
-                 (int)hostname_len, hostname,
+        LogInfo(("Received HTTP response from %s %.*s%.*s. Status Code=%u",
+                 pcMethod, (int)hostname_len, hostname,
                  (int)xRequestInfo.pathLen, xRequestInfo.pPath, network_context->xResponse.statusCode));
         LogDebug(("Response Headers:\n%.*s\n",
                   (int)pxResponse->headersLen, pxResponse->pHeaders));
