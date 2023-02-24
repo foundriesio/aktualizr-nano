@@ -106,6 +106,24 @@ void aknano_init_settings(struct aknano_settings *aknano_settings)
     LogInfo(("aknano_init_settings: ongoing_update_correlation_id=%s",
              aknano_settings->ongoing_update_correlation_id));
 
+
+    aknano_read_flash_storage(AKNANO_FLASH_OFF_ROLLBACK_RETRY_COUNT,
+                              &aknano_settings->rollback_retry_count,
+                              sizeof(aknano_settings->rollback_retry_count));
+    if (aknano_settings->rollback_retry_count < 0)
+        aknano_settings->rollback_retry_count = 0;
+    LogInfo(("aknano_init_settings: rollback_retry_count=%d",
+             aknano_settings->rollback_retry_count));
+
+    aknano_read_flash_storage(AKNANO_FLASH_OFF_ROLLBACK_NEXT_RETRY_TIME,
+                              &aknano_settings->rollback_next_retry_time,
+                              sizeof(aknano_settings->rollback_next_retry_time));
+    if (aknano_settings->rollback_next_retry_time < 0)
+        aknano_settings->rollback_next_retry_time = 0;
+    vTaskDelay(pdMS_TO_TICKS(100));
+    LogInfo(("aknano_init_settings: rollback_next_retry_time=%lu",
+             aknano_settings->rollback_next_retry_time));
+
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
     ReadFlashStorage(AKNANO_FLASH_OFF_IS_DEVICE_REGISTERED,
                      &temp_value,
@@ -122,6 +140,14 @@ void aknano_init_settings(struct aknano_settings *aknano_settings)
     LogInfo(("aknano_init_settings: device_name=%s",
              aknano_settings->device_name));
 
+    aknano_settings->is_running_rolled_back_image = aknano_settings->last_applied_version
+                                                    && aknano_settings->last_applied_version != aknano_settings->running_version
+                                                    && strnlen(aknano_settings->ongoing_update_correlation_id, AKNANO_MAX_UPDATE_CORRELATION_ID_LENGTH) > 0;
+
+    vTaskDelay(pdMS_TO_TICKS(100));
+    LogInfo(("aknano_init_settings: is_running_rolled_back_image=%d",
+             aknano_settings->is_running_rolled_back_image));
+
     aknano_settings->hwid = AKNANO_BOARD_NAME;
 }
 
@@ -129,31 +155,29 @@ void aknano_init_settings(struct aknano_settings *aknano_settings)
 void aknano_send_installation_finished_event(struct aknano_settings *aknano_settings)
 {
     static bool executed_once = false;
-    bool rollback_was_performed;
     bool running_version_reported;
 
     if (executed_once)
         return;
 
     executed_once = true;
-    rollback_was_performed = aknano_settings->last_applied_version
-                             && aknano_settings->last_applied_version != aknano_settings->running_version
-                             && strnlen(aknano_settings->ongoing_update_correlation_id, AKNANO_MAX_UPDATE_CORRELATION_ID_LENGTH) > 0;
     running_version_reported = aknano_settings->last_confirmed_version == aknano_settings->running_version;
     LogInfo(("aknano_send_installation_finished_event: aknano_settings.ongoing_update_correlation_id='%s'", aknano_settings->ongoing_update_correlation_id));
 
-    if (!rollback_was_performed && running_version_reported)
+    if (!aknano_settings->is_running_rolled_back_image && running_version_reported)
         return;
 
-    if (rollback_was_performed)
+    if (aknano_settings->is_running_rolled_back_image)
         LogInfo(("A rollback was done"));
 
     aknano_send_event(aknano_settings,
                       AKNANO_EVENT_INSTALLATION_COMPLETED,
-                      0, !rollback_was_performed);
-    if (!rollback_was_performed) {
+                      0, !aknano_settings->is_running_rolled_back_image);
+    if (!aknano_settings->is_running_rolled_back_image) {
         aknano_settings->last_applied_version = 0;
         aknano_settings->last_confirmed_version = aknano_settings->running_version;
+        aknano_settings->rollback_next_retry_time = 0;
+        aknano_settings->rollback_retry_count = 0;
     }
     memset(aknano_settings->ongoing_update_correlation_id, 0,
            sizeof(aknano_settings->ongoing_update_correlation_id));

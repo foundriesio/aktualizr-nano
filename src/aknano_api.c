@@ -15,6 +15,7 @@
 #include "sntp_example.h"
 #include "lwip/netif.h"
 #include "ini.h"
+#include "backoff_algorithm.h"
 
 #include "aknano_client.h"
 #include "aknano_priv.h"
@@ -246,6 +247,31 @@ int aknano_checkin(struct aknano_context *aknano_context)
     return xDemoStatus == 1? 0 : -1;
 }
 
+bool aknano_is_rollback(struct aknano_context *aknano_context)
+{
+    return aknano_context->selected_target.version == aknano_context->settings->last_applied_version;
+}
+
+time_t aknano_get_next_rollback_retry_time(struct aknano_settings *aknano_settings)
+{
+    BackoffAlgorithmStatus_t retry_status = BackoffAlgorithmSuccess;
+    BackoffAlgorithmContext_t retry_params;
+    uint16_t next_retry_backoff = 0; /* in minutes */
+    uint32_t random_int;
+
+    BackoffAlgorithm_InitializeParams(&retry_params,
+                                      AKNANO_ROLLBACK_RETRY_BACKOFF_BASE,
+                                      AKNANO_ROLLBACK_RETRY_MAX_DELAY,
+                                      AKNANO_MAX_ROLLED_BACK_VERSION_RETRIES);
+
+    aknano_gen_random_bytes(&random_int, sizeof(random_int));
+    for (int i = 0; i < aknano_settings->rollback_retry_count; i++)
+        BackoffAlgorithm_GetNextBackoff(&retry_params, random_int, &next_retry_backoff);
+
+    LogInfo(("rollback_retry set to %u minutes", next_retry_backoff));
+    return get_current_epoch() + (next_retry_backoff * 60);
+}
+
 bool aknano_install_selected_target(struct aknano_context *aknano_context)
 {
     bool is_reboot_required = false;
@@ -285,6 +311,15 @@ bool aknano_install_selected_target(struct aknano_context *aknano_context)
                           false);
     }
 
+    if (is_reboot_required) {
+        // if (aknano_settings->is_running_rolled_back_image && aknano_is_rollback(aknano_context)) {
+        aknano_settings->rollback_retry_count++;
+        // }
+        aknano_settings->rollback_next_retry_time = aknano_get_next_rollback_retry_time(aknano_settings);
+        LogInfo(("*** rollback_retry_count=%d rollback_next_retry_time=%lu",
+                 aknano_settings->rollback_retry_count, aknano_settings->rollback_next_retry_time));
+    }
+
     aknano_update_settings_in_flash(aknano_settings);
     return is_reboot_required;
 }
@@ -294,9 +329,15 @@ bool aknano_has_matching_target(struct aknano_context *aknano_context)
     return aknano_context->selected_target.version != 0;
 }
 
-bool aknano_is_rollback(struct aknano_context *aknano_context)
+bool aknano_should_retry_rollback(struct aknano_context *aknano_context)
 {
-    return aknano_context->selected_target.version == aknano_context->settings->last_applied_version;
+    if (aknano_context->settings->rollback_retry_count >= AKNANO_MAX_ROLLED_BACK_VERSION_RETRIES)
+        return false;
+
+    if (aknano_context->settings->rollback_next_retry_time > get_current_epoch())
+        return false;
+
+    return true;
 }
 
 int aknano_get_current(struct aknano_context *aknano_context)
@@ -365,11 +406,14 @@ void aknano_sample_loop()
                 int current = aknano_get_current(&aknano_context);
                 int selected = aknano_get_selected_version(&aknano_context);
                 bool is_rollback = aknano_is_rollback(&aknano_context);
+                bool should_retry_rollback = false;
+                if (is_rollback)
+                    should_retry_rollback = aknano_should_retry_rollback(&aknano_context);
 
-                LogInfo(("* Manifest data parsing result: current version=%ld selected version=%ld is_rollback=%s",
-                         current, selected, is_rollback? "YES" : "NO"));
+                LogInfo(("* Manifest data parsing result: current version=%ld selected version=%ld is_rollback=%s should_retry_rollback=%s",
+                         current, selected, is_rollback? "YES" : "NO", should_retry_rollback? "YES" : "NO"));
 
-                if (is_rollback) {
+                if (is_rollback && !should_retry_rollback) {
                     LogInfo(("* Selected version was already applied (and failed). Do not retrying it"));
                 } else if (current < selected) {
                     LogInfo((ANSI_COLOR_GREEN "* Update required: %lu -> %ld" ANSI_COLOR_RESET,

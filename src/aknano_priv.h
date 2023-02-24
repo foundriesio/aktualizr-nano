@@ -98,6 +98,9 @@
 #define AKNANO_FLASH_OFF_LAST_CONFIRMED_VERSION (AKNANO_FLASH_OFF_STATE_BASE + sizeof(int))
 #define AKNANO_FLASH_OFF_ONGOING_UPDATE_COR_ID  (AKNANO_FLASH_OFF_STATE_BASE + sizeof(int) * 2)
 
+#define AKNANO_FLASH_OFF_ROLLBACK_RETRY_COUNT  (AKNANO_FLASH_OFF_STATE_BASE + (sizeof(int) * 2) + 100)
+#define AKNANO_FLASH_OFF_ROLLBACK_NEXT_RETRY_TIME  (AKNANO_FLASH_OFF_STATE_BASE + (sizeof(int) * 3) + 100)
+
 /* TUF metadata */
 #define AKNANO_FLASH_OFF_TUF_ROLES_BASE (AKNANO_FLASH_SECTOR_SIZE * 2)
 #define AKNANO_TUF_METADATA_MAX_SIZE (AKNANO_FLASH_SECTOR_SIZE * 4) /* 16 KB */
@@ -178,11 +181,14 @@ struct aknano_settings {
     uint32_t    running_version;
     int         last_applied_version;
     int         last_confirmed_version;
+    int         rollback_retry_count;
+    int         rollback_next_retry_time;
     int         polling_interval;
     time_t      boot_up_epoch;
     char        ongoing_update_correlation_id[AKNANO_MAX_UPDATE_CORRELATION_ID_LENGTH];
     uint8_t     image_position;
     const char *hwid;
+    bool        is_running_rolled_back_image;
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
     char        token[AKNANO_MAX_TOKEN_LENGTH];
     char        device_certificate[AKNANO_CERT_BUF_SIZE];
@@ -195,7 +201,7 @@ struct aknano_network_context;
 /* Context is not kept between iterations */
 struct aknano_context {
     uint8_t                        url_buffer[URL_BUFFER_SIZE];
-    struct aknano_settings *       settings; /* TODO: may not always be set yet */
+    struct aknano_settings *       settings;
     struct aknano_target           selected_target;
 
     /* Connection to the device gateway */
@@ -204,6 +210,13 @@ struct aknano_context {
     mbedtls_sha256_context         sha256_context;
 };
 
+#define AKNANO_MAX_ROLLED_BACK_VERSION_RETRIES  5
+
+/* 5 minutes */
+#define AKNANO_ROLLBACK_RETRY_BACKOFF_BASE 5
+
+/* 10 days */
+#define AKNANO_ROLLBACK_RETRY_MAX_DELAY 60 * 24 * 10
 
 #define AKNANO_IMAGE_DOWNLOAD_REQUEST_LENGTH  4096 * 4
 #define AKNANO_IMAGE_DOWNLOAD_BUFFER_LENGTH AKNANO_IMAGE_DOWNLOAD_REQUEST_LENGTH + 1024

@@ -98,16 +98,34 @@ status_t aknano_write_data_to_storage(int offset, const void *data, size_t data_
 void aknano_update_settings_in_flash(struct aknano_settings *aknano_settings)
 {
     char flashPageBuffer[256];
+    size_t offset = 0;
 
     memset(flashPageBuffer, 0, sizeof(flashPageBuffer));
-    memcpy(flashPageBuffer, &aknano_settings->last_applied_version, sizeof(int));
-    memcpy(flashPageBuffer + sizeof(int), &aknano_settings->last_confirmed_version, sizeof(int));
-    memcpy(flashPageBuffer + sizeof(int) * 2, aknano_settings->ongoing_update_correlation_id,
+
+
+    memcpy(flashPageBuffer + offset, &aknano_settings->last_applied_version, sizeof(int));
+    offset += sizeof(int);
+
+    memcpy(flashPageBuffer + offset, &aknano_settings->last_confirmed_version, sizeof(int));
+    offset += sizeof(int);
+
+    memcpy(flashPageBuffer + offset, aknano_settings->ongoing_update_correlation_id,
            sizeof(aknano_settings->ongoing_update_correlation_id));
+    offset += sizeof(aknano_settings->ongoing_update_correlation_id);
+
+    memcpy(flashPageBuffer + offset, &aknano_settings->rollback_retry_count,
+           sizeof(aknano_settings->rollback_retry_count));
+    offset += sizeof(aknano_settings->rollback_retry_count);
+
+    memcpy(flashPageBuffer + offset, &aknano_settings->rollback_next_retry_time,
+           sizeof(aknano_settings->rollback_next_retry_time));
+    offset += sizeof(aknano_settings->rollback_next_retry_time);
+
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
-    flashPageBuffer[sizeof(int) * 2 + sizeof(aknano_settings->ongoing_update_correlation_id)] =
-        aknano_settings->is_device_registered;
+    flashPageBuffer[offset] = aknano_settings->is_device_registered;
+    offset += 1;
 #endif
+
     LogInfo(("Writing settings to flash..."));
     aknano_write_data_to_storage(AKNANO_FLASH_OFF_STATE_BASE, flashPageBuffer, sizeof(flashPageBuffer));
 }
