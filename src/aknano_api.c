@@ -11,8 +11,6 @@
 #include <stdio.h>
 
 #include "lwip/opt.h"
-#include "lwip/apps/sntp.h"
-#include "sntp_example.h"
 #include "lwip/netif.h"
 #include "ini.h"
 #include "backoff_algorithm.h"
