@@ -250,5 +250,3 @@ bool aknano_send_event(struct aknano_settings *aknano_settings,
     aknano_mtls_disconnect(&network_context);
     return TRUE;
 }
-
-unsigned char tuf_data_buffer[TUF_DATA_BUFFER_LEN];

@@ -112,7 +112,8 @@ int tuf_client_fetch_file(const char *file_base_name, unsigned char *target_buff
                 return TUF_ERROR_DATA_EXCEEDS_BUFFER_SIZE;
             }
             *file_size = aknano_context->dg_network_context->reply_body_len;
-            memcpy(target_buffer, aknano_context->dg_network_context->reply_body, aknano_context->dg_network_context->reply_body_len);
+            /* aknano_context->dg_network_context->reply_body may overlap with target_buffer */
+            memmove(target_buffer, aknano_context->dg_network_context->reply_body, aknano_context->dg_network_context->reply_body_len);
             target_buffer[aknano_context->dg_network_context->reply_body_len] = '\0';
             return TUF_SUCCESS;
         } else {
@@ -131,20 +132,20 @@ int aknano_provision_tuf_root(struct aknano_context *aknano_context)
     int ret;
     const char *root_file_name = "1.root.json";
 
-    if (read_local_json_file(AKNANO_FLASH_OFF_TUF_ROOT_PROVISIONING, tuf_data_buffer, sizeof(tuf_data_buffer), &file_size) == TUF_SUCCESS) {
+    if (read_local_json_file(AKNANO_FLASH_OFF_TUF_ROOT_PROVISIONING, ucUserBuffer, sizeof(ucUserBuffer), &file_size) == TUF_SUCCESS) {
         LogInfo(("aknano_provision_tuf_root: root json already provisioned"));
         return TUF_SUCCESS;
     }
 
-    ret = tuf_client_fetch_file(root_file_name, tuf_data_buffer, sizeof(tuf_data_buffer), &file_size, aknano_context);
+    ret = tuf_client_fetch_file(root_file_name, ucUserBuffer, sizeof(ucUserBuffer), &file_size, aknano_context);
     LogInfo(("aknano_provision_tuf_root: fetch_file  ret=%d file_size=%ld", root_file_name, ret, file_size));
 
     if (ret == 0) {
-        if (tuf_data_buffer[0] != '{' || file_size < 100)
+        if (ucUserBuffer[0] != '{' || file_size < 100)
             return -1;
 
         // LogInfo(("write_local_file: role=%d initial_offset=%d len=%d", role, initial_offset, len));
-        ret = aknano_write_data_to_storage(AKNANO_FLASH_OFF_TUF_ROOT_PROVISIONING, tuf_data_buffer, file_size);
+        ret = aknano_write_data_to_storage(AKNANO_FLASH_OFF_TUF_ROOT_PROVISIONING, ucUserBuffer, file_size);
     }
     return ret;
 }

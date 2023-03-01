@@ -225,17 +225,22 @@ int aknano_checkin(struct aknano_context *aknano_context)
         }
 #endif
         if (tuf_ret == 0) {
-            tuf_ret = tuf_refresh(aknano_context, reference_time, tuf_data_buffer, sizeof(tuf_data_buffer));
-            if (tuf_ret == TUF_SUCCESS) {
-                /* Wait for a successful tuf refresh before marking image as permanent */
-                aknano_set_image_confirmed();
-                aknano_send_installation_finished_event(aknano_settings);
-            }
+            /* Leave some room for http headers inside the same buffer */
+            const size_t max_tuf_metadata_size = sizeof(ucUserBuffer) - 1024;
+            tuf_ret = tuf_refresh(aknano_context, reference_time, ucUserBuffer, max_tuf_metadata_size);
             LogInfo((ANSI_COLOR_MAGENTA "tuf_refresh %s (%d)" ANSI_COLOR_RESET, tuf_get_error_string(tuf_ret), tuf_ret));
         }
 
-        if (tuf_ret == 0)
-            parse_targets_metadata((const char *)tuf_data_buffer, strlen((char *)tuf_data_buffer), aknano_context);
+        if (tuf_ret == TUF_SUCCESS) {
+            /* ucUserBuffer is shared between TUF and overall HTTP communication
+             * Make sure to handle returned TUF data before performing any new HTTP operation
+             */
+            parse_targets_metadata((const char *)ucUserBuffer, strlen((char *)ucUserBuffer), aknano_context);
+
+            /* Wait for a successful tuf refresh before marking image as permanent */
+            aknano_set_image_confirmed();
+            aknano_send_installation_finished_event(aknano_settings);
+        }
     }
     /* Close the network connection.  */
     aknano_mtls_disconnect(&network_context);
