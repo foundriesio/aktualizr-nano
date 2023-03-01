@@ -52,7 +52,6 @@
 // #define AKNANO_DRY_RUN
 
 #define AKNANO_BOARD_NAME BOARD_NAME
-#define TUF_DATA_BUFFER_LEN 10 * 1024
 
 #define RECV_BUFFER_SIZE 1640
 #define URL_BUFFER_SIZE 300
@@ -152,7 +151,6 @@
 #endif
 #endif
 
-extern unsigned char tuf_data_buffer[TUF_DATA_BUFFER_LEN];
 
 enum aknano_response {
     AKNANO_NETWORKING_ERROR,
