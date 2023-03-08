@@ -143,7 +143,7 @@ int aknano_checkin(struct aknano_context *aknano_context)
     struct aknano_network_context network_context;
     BaseType_t xDemoStatus;
     struct aknano_settings *aknano_settings = aknano_context->settings;
-    int tuf_ret = 0;
+    int tuf_ret = TUF_SUCCESS;
 
 #ifdef AKNANO_ALLOW_PROVISIONING
     static bool tuf_root_is_provisioned = false;
@@ -224,7 +224,7 @@ int aknano_checkin(struct aknano_context *aknano_context)
             tuf_root_is_provisioned = (tuf_ret == 0);
         }
 #endif
-        if (tuf_ret == 0) {
+        if (tuf_ret == TUF_SUCCESS) {
             /* Leave some room for http headers inside the same buffer */
             const size_t max_tuf_metadata_size = sizeof(ucUserBuffer) - 1024;
             tuf_ret = tuf_refresh(aknano_context, reference_time, ucUserBuffer, max_tuf_metadata_size);
@@ -238,16 +238,20 @@ int aknano_checkin(struct aknano_context *aknano_context)
             parse_targets_metadata((const char *)ucUserBuffer, strlen((char *)ucUserBuffer), aknano_context);
 
             /* Wait for a successful tuf refresh before marking image as permanent */
-            aknano_set_image_confirmed();
-            aknano_send_installation_finished_event(aknano_settings);
+            if (aknano_settings->application_self_test_ok) {
+                aknano_set_image_confirmed(aknano_settings);
+                aknano_send_installation_finished_event(aknano_settings);
+            }
         }
+    } else {
+        tuf_ret = -10;
     }
     /* Close the network connection.  */
     aknano_mtls_disconnect(&network_context);
 #ifdef AKNANO_DUMP_MEMORY_USAGE_INFO
     aknano_dump_memory_info("After aknano_checkin");
 #endif
-    return xDemoStatus == 1? 0 : -1;
+    return tuf_ret;
 }
 
 bool aknano_is_rollback(struct aknano_context *aknano_context)
@@ -327,6 +331,16 @@ bool aknano_install_selected_target(struct aknano_context *aknano_context)
     return is_reboot_required;
 }
 
+bool aknano_set_application_self_test_ok(struct aknano_settings *aknano_settings)
+{
+    return aknano_settings->application_self_test_ok = true;
+}
+
+bool aknano_is_temp_image(struct aknano_settings *aknano_settings)
+{
+    return !aknano_settings->is_image_permanent;
+}
+
 bool aknano_has_matching_target(struct aknano_context *aknano_context)
 {
     return aknano_context->selected_target.version != 0;
@@ -382,9 +396,19 @@ int limit_sleep_time_range(int sleep_time)
 void aknano_sample_loop()
 {
     static struct aknano_settings aknano_settings;
+    time_t startup_epoch = get_current_epoch();
+    const time_t max_offline_time_on_temp_image = 180;
+    bool any_checkin_ok = false;
 
     /* Initialization needs to be called once */
     aknano_init(&aknano_settings);
+
+    /*
+     * Tell aktualizr-nano that it is OK to set the current image as permanent
+     * aktualizr-nano also will only set the image as permanent after a successful
+     * checkin is done at the factory device gateway
+     */
+    aknano_set_application_self_test_ok(&aknano_settings);
     while (true) {
         static struct aknano_context aknano_context;
         int checkin_result;
@@ -403,13 +427,13 @@ void aknano_sample_loop()
             bool is_update_required = false;
             bool is_reboot_required = false;
 
-            if (!aknano_has_matching_target(&aknano_context)) {
-                LogInfo(("* No matching target found in manifest"));
-            } else {
+            any_checkin_ok = true;
+            if (aknano_has_matching_target(&aknano_context)) {
                 int current = aknano_get_current(&aknano_context);
                 int selected = aknano_get_selected_version(&aknano_context);
                 bool is_rollback = aknano_is_rollback(&aknano_context);
                 bool should_retry_rollback = false;
+
                 if (is_rollback)
                     should_retry_rollback = aknano_should_retry_rollback(&aknano_context);
 
@@ -425,6 +449,8 @@ void aknano_sample_loop()
                 } else {
                     LogInfo(("* No update required"));
                 }
+            } else {
+                LogInfo(("* No matching target found in manifest"));
             }
 
             /* An update is required */
@@ -438,9 +464,18 @@ void aknano_sample_loop()
             LogInfo(("* Check-in failed with error %d", checkin_result));
         }
 
+        /* If the checkin operation fails for too long after an update, the image may be bad */
+        if (!any_checkin_ok && aknano_is_temp_image(&aknano_settings) &&
+            get_current_epoch() > startup_epoch + max_offline_time_on_temp_image) {
+
+            LogWarn(("* Check-in failed for too long while running a temporary image. Forcing a reboot to initiate rollback process"));
+            vTaskDelay(pdMS_TO_TICKS(2000));
+            aknano_reboot_command();
+        }
+
         sleep_time = aknano_get_setting(&aknano_context, "polling_interval");
         sleep_time = limit_sleep_time_range(sleep_time);
-        LogInfo(("Sleeping %d seconds\n\n", sleep_time));
+        LogInfo(("Sleeping %d seconds. any_checkin_ok=%d temp_image=%d\n\n", sleep_time, any_checkin_ok, aknano_is_temp_image(&aknano_settings)));
         vTaskDelay(pdMS_TO_TICKS(sleep_time * 1000));
     }
 }

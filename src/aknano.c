@@ -182,14 +182,10 @@ void aknano_send_installation_finished_event(struct aknano_settings *aknano_sett
     aknano_update_settings_in_flash(aknano_settings);
 }
 
-void aknano_set_image_confirmed()
+void aknano_get_current_image_state(struct aknano_settings *aknano_settings)
 {
-    static bool executed_once = false;
     uint32_t currentStatus;
-    bool image_is_permanent = false;
-
-    if (executed_once)
-        return;
+    bool is_image_permanent = false;
 
     vTaskDelay(pdMS_TO_TICKS(200));
     if (bl_get_image_state(&currentStatus) == kStatus_Success) {
@@ -199,20 +195,24 @@ void aknano_set_image_confirmed()
             LogInfo((ANSI_COLOR_GREEN "Current image state is ReadyForTest" ANSI_COLOR_RESET));
         } else {
             LogInfo((ANSI_COLOR_GREEN "Current image state is Permanent" ANSI_COLOR_RESET));
-            image_is_permanent = true;
+            is_image_permanent = true;
         }
     } else {
         LogWarn((ANSI_COLOR_RED "Error getting image state"));
     }
 
-    if (!image_is_permanent) {
+    aknano_settings->is_image_permanent = is_image_permanent;
+}
+
+void aknano_set_image_confirmed(struct aknano_settings *aknano_settings)
+{
+    if (!aknano_settings->is_image_permanent) {
         LogInfo((ANSI_COLOR_GREEN "Marking image as Permanent" ANSI_COLOR_RESET));
         if (bl_update_image_state(kSwapType_Permanent) == kStatus_Success)
-            image_is_permanent = true;
+            aknano_settings->is_image_permanent = true;
         else
             LogError((ANSI_COLOR_RED "Error marking image as Permanent" ANSI_COLOR_RESET));
     }
-    executed_once = true;
 }
 
 #ifdef AKNANO_ALLOW_PROVISIONING
@@ -356,6 +356,7 @@ void aknano_init(struct aknano_settings *aknano_settings)
     LogWarn((ANSI_COLOR_RED "**** Sleeping for 20 seconds ****" ANSI_COLOR_RESET));
     vTaskDelay(pdMS_TO_TICKS(20000));
 #endif
+    aknano_get_current_image_state(aknano_settings);
 }
 
 void aknano_log_running_mode()

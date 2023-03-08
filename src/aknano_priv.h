@@ -187,6 +187,8 @@ struct aknano_settings {
     uint8_t     image_position;
     const char *hwid;
     bool        is_running_rolled_back_image;
+    bool        application_self_test_ok;
+    bool        is_image_permanent;
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
     char        token[AKNANO_MAX_TOKEN_LENGTH];
     char        device_certificate[AKNANO_CERT_BUF_SIZE];
