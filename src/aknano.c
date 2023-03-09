@@ -67,6 +67,8 @@ void aknano_init_settings(struct aknano_settings *aknano_settings)
     LogInfo(("aknano_init_settings: image_position=%u", aknano_settings->image_position));
 
     bl_get_image_build_num(&aknano_settings->running_version, aknano_settings->image_position);
+    if (aknano_settings->running_version == UINT_MAX)
+        aknano_settings->running_version = 0;
     LogInfo(("aknano_init_settings: aknano_settings->running_version=%lu",
              aknano_settings->running_version));
 

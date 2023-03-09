@@ -357,7 +357,7 @@ bool aknano_should_retry_rollback(struct aknano_context *aknano_context)
     return true;
 }
 
-int aknano_get_current(struct aknano_context *aknano_context)
+uint32_t aknano_get_current(struct aknano_context *aknano_context)
 {
     return aknano_context->settings->running_version;
 }
@@ -437,7 +437,7 @@ void aknano_sample_loop()
 
             any_checkin_ok = true;
             if (aknano_has_matching_target(&aknano_context)) {
-                int current = aknano_get_current(&aknano_context);
+                uint32_t current = aknano_get_current(&aknano_context);
                 int selected = aknano_get_selected_version(&aknano_context);
                 bool is_rollback = aknano_is_rollback(&aknano_context);
                 bool should_retry_rollback = false;
