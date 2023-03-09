@@ -369,9 +369,17 @@ int aknano_get_selected_version(struct aknano_context *aknano_context)
 
 void aknano_reboot_command()
 {
+#ifdef AKNANO_DISABLE_REBOOT
+    LogInfo(("Skipping reboot..."));
+    LogInfo(("Halting task execution"));
+    while (1) {
+        ;
+    }
+#else
     LogInfo(("Rebooting...."));
     vTaskDelay(pdMS_TO_TICKS(100));
     NVIC_SystemReset();
+#endif
 }
 
 int aknano_get_setting(struct aknano_context *aknano_context, const char *setting_name)
