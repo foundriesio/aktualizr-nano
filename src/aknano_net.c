@@ -101,7 +101,9 @@ BaseType_t aknano_mtls_send_http_request(
     size_t                         buffer_len,
     const char **                  header_keys,
     const char **                  header_values,
-    size_t                         header_len
+    size_t                         header_len,
+    int                            request_range_start,
+    int                            request_range_end
     )
 {
     /* Return value of this method. */
@@ -147,9 +149,18 @@ BaseType_t aknano_mtls_send_http_request(
     xHTTPStatus = HTTPClient_InitializeRequestHeaders(&xRequestHeaders,
                                                       &xRequestInfo);
 
-    for (int i = 0; i < header_len; i++) {
-        HTTPClient_AddHeader(&xRequestHeaders, header_keys[i], strlen(header_keys[i]), header_values[i], strlen(header_values[i]));
-        // LogInfo(("Adding header %s=%s", header_keys[i], header_values[i]));
+    if (header_keys && header_values) {
+        for (int i = 0; i < header_len; i++) {
+            HTTPClient_AddHeader(&xRequestHeaders, header_keys[i], strlen(header_keys[i]), header_values[i], strlen(header_values[i]));
+            // LogInfo(("Adding header %s=%s", header_keys[i], header_values[i]));
+        }
+    }
+
+    if (request_range_start >= 0) {
+        LogInfo(("Setting range header %d->%d", request_range_start, request_range_end));
+        HTTPClient_AddRangeHeader(&xRequestHeaders,
+                                  request_range_start,
+                                  request_range_end);
     }
 
     if (xHTTPStatus == HTTPSuccess) {
