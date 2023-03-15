@@ -262,7 +262,7 @@ int init_network_context(struct aknano_network_context *network_context);
 
 BaseType_t aknano_mtls_connect(struct aknano_network_context *network_context, const char *hostname, size_t hostname_len, uint16_t port, const char *server_root_ca, size_t server_root_ca_len);
 
-BaseType_t aknano_mtls_send_http_request(struct aknano_network_context *network_context, const char *hostname, size_t hostname_len, const char *pcMethod, const char *pcPath, const char *pcBody, size_t xBodyLen, unsigned char *buffer, size_t buffer_len, const char **header_keys, const char **header_values, size_t header_len);
+BaseType_t aknano_mtls_send_http_request(struct aknano_network_context *network_context, const char *hostname, size_t hostname_len, const char *pcMethod, const char *pcPath, const char *pcBody, size_t xBodyLen, unsigned char *buffer, size_t buffer_len, const char **header_keys, const char **header_values, size_t header_len, int request_range_start, int request_range_end);
 
 void aknano_mtls_disconnect(struct aknano_network_context *network_context);
 
@@ -274,7 +274,7 @@ bool aknano_send_event(struct aknano_settings *aknano_settings, const char *even
 void aknano_init_settings(struct aknano_settings *aknano_settings);
 void aknano_init_context(struct aknano_context *aknano_context, struct aknano_settings *aknano_settings);
 void aknano_send_installation_finished_event(struct aknano_settings *aknano_settings);
-void aknano_set_image_confirmed();
+void aknano_set_image_confirmed(struct aknano_settings *aknano_settings);
 void aknano_init(struct aknano_settings *aknano_settings);
 
 int parse_targets_metadata(const char *data, int len, void *application_context);

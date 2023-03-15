@@ -206,7 +206,9 @@ BaseType_t aknano_send_http_request(struct aknano_network_context *network_conte
         sizeof(ucUserBuffer),
         header_keys,
         header_values,
-        2);
+        2,
+        -1,
+        -1);
 
     return ret;
 }
