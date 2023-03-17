@@ -153,7 +153,8 @@ void aknano_send_installation_finished_event(struct aknano_settings *aknano_sett
 
     executed_once = true;
     running_version_reported = aknano_settings->last_confirmed_version == aknano_settings->running_version;
-    LogInfo(("aknano_send_installation_finished_event: aknano_settings.ongoing_update_correlation_id='%s'", aknano_settings->ongoing_update_correlation_id));
+    LogInfo(("aknano_send_installation_finished_event: aknano_settings.ongoing_update_correlation_id='%s'",
+             aknano_settings->ongoing_update_correlation_id));
 
     if (!aknano_settings->is_running_rolled_back_image && running_version_reported)
         return;

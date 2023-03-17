@@ -114,7 +114,8 @@ static void parse_config(const char *config_data, int buffer_len, struct aknano_
 
         memset(unescaped_toml, 0, sizeof(unescaped_toml));
         result = JSON_Search(config_data, buffer_len,
-                             "z-50-fioctl.toml" TUF_JSON_QUERY_KEY_SEPARATOR "Value", strlen("z-50-fioctl.toml" TUF_JSON_QUERY_KEY_SEPARATOR "Value"),
+                             "z-50-fioctl.toml" TUF_JSON_QUERY_KEY_SEPARATOR "Value",
+                             strlen("z-50-fioctl.toml" TUF_JSON_QUERY_KEY_SEPARATOR "Value"),
                              &value, &valueLength);
         if (valueLength < sizeof(unescaped_toml)) {
             replace_escaped_chars(unescaped_toml, value, valueLength);
@@ -124,7 +125,8 @@ static void parse_config(const char *config_data, int buffer_len, struct aknano_
         }
 
         result = JSON_Search(config_data, buffer_len,
-                             "polling_interval" TUF_JSON_QUERY_KEY_SEPARATOR "Value", strlen("polling_interval" TUF_JSON_QUERY_KEY_SEPARATOR "Value"),
+                             "polling_interval" TUF_JSON_QUERY_KEY_SEPARATOR "Value",
+                             strlen("polling_interval" TUF_JSON_QUERY_KEY_SEPARATOR "Value"),
                              &value, &valueLength);
 
         if (result == JSONSuccess) {
@@ -142,7 +144,8 @@ static void parse_config(const char *config_data, int buffer_len, struct aknano_
         }
 
         result = JSON_Search(config_data, buffer_len,
-                             "btn_polling_interval" TUF_JSON_QUERY_KEY_SEPARATOR "Value", strlen("btn_polling_interval" TUF_JSON_QUERY_KEY_SEPARATOR "Value"),
+                             "btn_polling_interval" TUF_JSON_QUERY_KEY_SEPARATOR "Value",
+                             strlen("btn_polling_interval" TUF_JSON_QUERY_KEY_SEPARATOR "Value"),
                              &value, &valueLength);
 
         if (result == JSONSuccess) {
@@ -509,7 +512,8 @@ void aknano_sample_loop()
 
         sleep_time = aknano_get_setting(&aknano_context, "polling_interval");
         sleep_time = limit_sleep_time_range(sleep_time);
-        LogInfo(("Sleeping %d seconds. any_checkin_ok=%d temp_image=%d\n\n", sleep_time, any_checkin_ok, aknano_is_temp_image(&aknano_settings)));
+        LogInfo(("Sleeping %d seconds. any_checkin_ok=%d temp_image=%d\n\n",
+                 sleep_time, any_checkin_ok, aknano_is_temp_image(&aknano_settings)));
         aknano_delay(sleep_time * 1000);
     }
 }

@@ -165,10 +165,12 @@ static BaseType_t aknano_download_image(
     aknano_mtls_disconnect(network_context);
 
     if (stored != aknano_context->selected_target.expected_size) {
-        LogInfo((ANSI_COLOR_MAGENTA "Actual file size (%ld bytes) does not match expected size (%ld bytes)" ANSI_COLOR_RESET, stored, aknano_context->selected_target.expected_size));
+        LogInfo((ANSI_COLOR_MAGENTA "Actual file size (%ld bytes) does not match expected size (%ld bytes)" ANSI_COLOR_RESET, 
+                 stored, aknano_context->selected_target.expected_size));
         xStatus = pdFAIL;
     } else {
-        LogInfo((ANSI_COLOR_MAGENTA "Actual file size (%ld bytes) matches expected size (%ld bytes)" ANSI_COLOR_RESET, stored, aknano_context->selected_target.expected_size));
+        LogInfo((ANSI_COLOR_MAGENTA "Actual file size (%ld bytes) matches expected size (%ld bytes)" ANSI_COLOR_RESET, 
+                 stored, aknano_context->selected_target.expected_size));
     }
 
     if (xStatus == pdPASS) {
