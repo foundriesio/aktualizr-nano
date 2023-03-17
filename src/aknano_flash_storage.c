@@ -5,11 +5,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include "logging_levels.h"
-#define LIBRARY_LOG_NAME "aknano_flash"
-#define LIBRARY_LOG_LEVEL LOG_INFO
-#include "logging_stack.h"
-
 #include <stdint.h>
 
 #include "mflash_common.h"

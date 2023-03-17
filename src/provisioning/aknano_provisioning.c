@@ -5,7 +5,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 #ifdef AKNANO_ALLOW_PROVISIONING
-#define LIBRARY_LOG_LEVEL LOG_INFO
 
 #include "aknano_secret.h"
 #include "aknano_provisioning.h"

@@ -1,8 +1,6 @@
 #include "unity.h"
 #include "unity_fixture.h"
 
-#define LIBRARY_LOG_LEVEL LOG_INFO
-
 #include <time.h>
 #include <stdio.h>
 
@@ -15,6 +13,7 @@
 #include "aknano_flash_storage.h"
 #include "aknano_net.h"
 #include "aknano_secret.h"
+#include "aknano_debug.h"
 #include "aknano.h"
 
 /**

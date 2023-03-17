@@ -6,13 +6,13 @@
  */
 
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
-#define LIBRARY_LOG_LEVEL LOG_INFO
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "aknano_debug.h"
 #include "aknano.h"
 
 #define AKNANO_REST_API_PORT 443
