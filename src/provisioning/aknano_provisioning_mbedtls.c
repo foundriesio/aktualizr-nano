@@ -19,7 +19,8 @@
 #include <mbedtls/entropy_poll.h>
 #include <mbedtls/oid.h>
 
-#include "aknano_priv.h"
+#include "aknano.h"
+#include "aknano_debug.h"
 #include "aknano_secret.h"
 #include "aknano_provisioning_secret.h"
 
@@ -34,7 +35,7 @@ int aknano_gen_device_certificate_from_key(
     const char *uuid, const char *factory_name,
     const char *serial_string, char *cert_buf)
 {
-    LogInfo(("aknano_gen_device_certificate_from_key")); vTaskDelay(50 / portTICK_PERIOD_MS);
+    LogInfo(("aknano_gen_device_certificate_from_key")); aknano_delay(50);
 
     const char *pers = uuid;
     const char *not_before = "20210101000000";
@@ -69,15 +70,15 @@ int aknano_gen_device_certificate_from_key(
     mbedtls_x509_crt_init(&factory_crt);
 
 
-    LogInfo(("ulDerPublicKeyLength=%lu", ulDerPublicKeyLength)); vTaskDelay(50 / portTICK_PERIOD_MS);
+    LogInfo(("ulDerPublicKeyLength=%lu", ulDerPublicKeyLength));
 
     ret = mbedtls_pk_parse_public_key(&device_key, pxDerPublicKey, ulDerPublicKeyLength);
     if (ret != 0) {
-        LogInfo(("mbedtls_pk_parse_key error")); vTaskDelay(50 / portTICK_PERIOD_MS);
+        LogInfo(("mbedtls_pk_parse_key error"));
         mbedtls_printf("mbedtls_pk_parse_key error: %d [0x%04X]", ret, -ret);
         goto exit;
     }
-    LogInfo(("mbedtls_pk_parse_key OK")); vTaskDelay(50 / portTICK_PERIOD_MS);
+    LogInfo(("mbedtls_pk_parse_key OK"));
 
 #if 0
 
@@ -203,7 +204,7 @@ int aknano_gen_device_certificate_and_key(
     const char *uuid, const char *factory_name,
     const char *serial_string, unsigned char *cert_buf, unsigned char *key_buf)
 {
-    LogInfo(("aknano_gen_device_certificate_and_key")); vTaskDelay(50 / portTICK_PERIOD_MS);
+    LogInfo(("aknano_gen_device_certificate_and_key"));
 
     // struct device *entropy_device = device_get_binding(DT_CHOSEN_ZEPHYR_ENTROPY_LABEL);
     const char *pers = uuid;
@@ -237,11 +238,11 @@ int aknano_gen_device_certificate_and_key(
 #if 0
     ret = mbedtls_pk_parse_public_key(&device_key, pxDerPublicKey, ulDerPublicKeyLength);
     if (ret != 0) {
-        LogInfo(("mbedtls_pk_parse_key error")); vTaskDelay(50 / portTICK_PERIOD_MS);
+        LogInfo(("mbedtls_pk_parse_key error"));
         mbedtls_printf("mbedtls_pk_parse_key error: %d [0x%04X]", ret, -ret);
         goto exit;
     }
-    LogInfo(("mbedtls_pk_parse_key OK")); vTaskDelay(50 / portTICK_PERIOD_MS);
+    LogInfo(("mbedtls_pk_parse_key OK"));
 #endif
     ret = mbedtls_pk_setup(&new_device_key, mbedtls_pk_info_from_type(MBEDTLS_PK_ECKEY));
     if (ret != 0) {
@@ -283,7 +284,7 @@ int aknano_gen_device_certificate_and_key(
     }
 
     /* Key created */
-    LogInfo(("aknano_gen_device_certificate_and_key key created\r\n%s", key_buf)); vTaskDelay(50 / portTICK_PERIOD_MS);
+    LogInfo(("aknano_gen_device_certificate_and_key key created\r\n%s", key_buf));
 
     /* Sign CSR with CA key */
 

@@ -8,12 +8,12 @@
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
 #define LIBRARY_LOG_LEVEL LOG_INFO
 #include <assert.h>
-#include <stdlib.h>
-#include <stdbool.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-#include "aknano_priv.h"
+#include "aknano.h"
 
 #define AKNANO_REST_API_PORT 443
 #define AKNANO_REST_API_ENDPOINT "api.foundries.io"
@@ -122,7 +122,7 @@ static char bodyBuffer[1000];
 static BaseType_t prvConnectToRestApiServer(NetworkContext_t *pxNetworkContext)
 {
     // LogInfo( ( "prvConnectToDevicesGateway: BEGIN") );
-    // vTaskDelay( pdMS_TO_TICKS( 100 ) );
+    // aknano_delay(100);
 
     ServerInfo_t xServerInfo = { 0 };
     SocketsConfig_t xSocketsConfig = { 0 };
@@ -152,7 +152,7 @@ static BaseType_t prvConnectToRestApiServer(NetworkContext_t *pxNetworkContext)
              xServerInfo.pHostName,
              xServerInfo.port));
 
-    vTaskDelay(pdMS_TO_TICKS(100));
+    aknano_delay(100);
 
     /* Attempt to create a mutually authenticated TLS connection. */
     xNetworkStatus = SecureSocketsTransport_Connect(pxNetworkContext,
@@ -161,7 +161,7 @@ static BaseType_t prvConnectToRestApiServer(NetworkContext_t *pxNetworkContext)
 
     LogInfo(("SecureSocketsTransport_Connect result = %d", xNetworkStatus));
 
-    vTaskDelay(pdMS_TO_TICKS(100));
+    aknano_delay(100);
 
     if (xNetworkStatus != TRANSPORT_SOCKET_STATUS_SUCCESS) {
         LogError(("Error connecting to device gateway. result=%d", xNetworkStatus));

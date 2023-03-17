@@ -7,12 +7,16 @@
 
 #define LIBRARY_LOG_LEVEL LOG_INFO
 
-#include "aknano_priv.h"
-
+#include "aws_demo_config.h"
+#include "aws_dev_mode_key_provisioning.h"
+#include "board.h"
+#include "core_pkcs11_config.h"
+#include "core_pkcs11.h"
+#include "mbedtls/pem.h"
 #include "pkcs11t.h"
 
-#include "mbedtls/pem.h"
-
+#include "aknano_pkcs11.h"
+#include "aknano.h"
 
 #ifdef AKNANO_RESET_DEVICE_ID
 CK_RV prvDestroyDefaultCryptoObjects(void)
@@ -152,7 +156,7 @@ static CK_RV prvGetCertificate(const char *pcLabelName,
     return xResult;
 }
 
-CK_RV aknano_read_device_certificate(char *dst, size_t dst_size)
+bool aknano_read_device_certificate(char *dst, size_t dst_size)
 {
     uint8_t *cert_data = NULL;
     uint32_t cert_size = 0;
@@ -178,7 +182,7 @@ CK_RV aknano_read_device_certificate(char *dst, size_t dst_size)
 
     if (cert_data != NULL)
         vPortFree(cert_data);
-    return ret;
+    return ret == CKR_OK;
 }
 #endif
 

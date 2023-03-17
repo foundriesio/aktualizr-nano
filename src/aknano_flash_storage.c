@@ -10,10 +10,16 @@
 #define LIBRARY_LOG_LEVEL LOG_INFO
 #include "logging_stack.h"
 
-#include "aknano_priv.h"
+#include <stdint.h>
 
 #include "mflash_common.h"
 #include "mflash_drv.h"
+
+#include "mcuboot_app_support.h"
+
+#include "aknano.h"
+#include "aknano_debug.h"
+
 
 status_t aknano_init_flash_storage()
 {
@@ -129,6 +135,81 @@ void aknano_update_settings_in_flash(struct aknano_settings *aknano_settings)
     LogInfo(("Writing settings to flash..."));
     aknano_write_data_to_storage(AKNANO_FLASH_OFF_STATE_BASE, flashPageBuffer, sizeof(flashPageBuffer));
 }
+
+status_t aknano_set_image_ready_for_test()
+{
+    return bl_update_image_state(kSwapType_ReadyForTest);
+}
+
+bool aknano_verify_image(size_t image_size)
+{
+#ifdef AKNANO_DRY_RUN
+    return true;
+#else
+    partition_t update_partition;
+    if (bl_get_update_partition_info(&update_partition) != kStatus_Success) {
+        /* Could not get update partition info */
+        LogError(("Could not get update partition info"));
+        return false;
+    }
+    LogInfo(("Validating image of size %d", image_size));
+
+    struct image_header *ih;
+    ih = (struct image_header *)update_partition.start;
+    if (bl_verify_image((void *)update_partition.start, image_size) <= 0) {
+        /* Image validation failed */
+        LogError(("Image validation failed magic=0x%X", ih->ih_magic));
+        return false;
+    } else {
+        LogInfo(("Image validation succeeded"));
+        return true;
+    }
+#endif
+}
+
+void aknano_set_image_confirmed(struct aknano_settings *aknano_settings)
+{
+    if (!aknano_settings->is_image_permanent) {
+        LogInfo((ANSI_COLOR_GREEN "Marking image as Permanent" ANSI_COLOR_RESET));
+        if (bl_update_image_state(kSwapType_Permanent) == kStatus_Success)
+            aknano_settings->is_image_permanent = true;
+        else
+            LogError((ANSI_COLOR_RED "Error marking image as Permanent" ANSI_COLOR_RESET));
+    }
+}
+
+uint32_t aknano_get_target_slot_address(uint8_t current_image_position)
+{
+    if (current_image_position == 0x01)
+        return FLASH_AREA_IMAGE_2_OFFSET;
+    else if (current_image_position == 0x02)
+        return FLASH_AREA_IMAGE_1_OFFSET;
+    else
+        return FLASH_AREA_IMAGE_2_OFFSET;
+}
+
+void aknano_get_current_image_state(struct aknano_settings *aknano_settings)
+{
+    uint32_t currentStatus;
+    bool is_image_permanent = false;
+
+    aknano_delay(200);
+    if (bl_get_image_state(&currentStatus) == kStatus_Success) {
+        if (currentStatus == kSwapType_Testing) {
+            LogInfo((ANSI_COLOR_GREEN "Current image state is Testing" ANSI_COLOR_RESET));
+        } else if (currentStatus == kSwapType_ReadyForTest) {
+            LogInfo((ANSI_COLOR_GREEN "Current image state is ReadyForTest" ANSI_COLOR_RESET));
+        } else {
+            LogInfo((ANSI_COLOR_GREEN "Current image state is Permanent" ANSI_COLOR_RESET));
+            is_image_permanent = true;
+        }
+    } else {
+        LogWarn((ANSI_COLOR_RED "Error getting image state"));
+    }
+
+    aknano_settings->is_image_permanent = is_image_permanent;
+}
+
 
 #ifdef AKNANO_ALLOW_PROVISIONING
 static status_t aknano_clear_flash_sector(int offset)

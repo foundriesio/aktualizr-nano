@@ -7,14 +7,16 @@
 
 #define LIBRARY_LOG_LEVEL LOG_INFO
 
-
-#include "mbedtls/sha256.h"
-
-#include "aknano_priv.h"
-#include "flexspi_flash_config.h"
-
 #include <stdio.h>
 #include <time.h>
+
+#include "flexspi_flash_config.h"
+#include "mbedtls/sha256.h"
+
+#include "aknano_debug.h"
+#include "aknano_flash_storage.h"
+#include "aknano_net.h"
+#include "aknano.h"
 
 #define AKNANO_REQUEST_BODY ""
 #define AKNANO_REQUEST_BODY_LEN sizeof(AKNANO_REQUEST_BODY) - 1
@@ -99,13 +101,8 @@ static BaseType_t aknano_download_image(
     uint32_t dst_partition_phys_addr;
     uint8_t sha256_bytes[AKNANO_SHA256_LEN];
 
-    if (image_position == 0x01)
-        dst_partition_phys_addr = FLASH_AREA_IMAGE_2_OFFSET;
-    else if (image_position == 0x02)
-        dst_partition_phys_addr = FLASH_AREA_IMAGE_1_OFFSET;
-    else
-        dst_partition_phys_addr = FLASH_AREA_IMAGE_2_OFFSET;
 
+    dst_partition_phys_addr = aknano_get_target_slot_address(image_position);
     configASSERT(pcPath != NULL);
 
     xNumReqBytes = AKNANO_IMAGE_DOWNLOAD_REQUEST_LENGTH;
@@ -183,26 +180,7 @@ static BaseType_t aknano_download_image(
             LogInfo((ANSI_COLOR_MAGENTA "Downloaded image SHA256 matches the expected value" ANSI_COLOR_RESET));
         }
 
-#ifndef AKNANO_DRY_RUN
-        partition_t update_partition;
-        if (bl_get_update_partition_info(&update_partition) != kStatus_Success) {
-            /* Could not get update partition info */
-            LogError(("Could not get update partition info"));
-            return pdFAIL;
-        }
-        LogInfo(("Validating image of size %d", stored));
-
-        struct image_header *ih;
-        ih = (struct image_header *)update_partition.start;
-        if (bl_verify_image((void *)update_partition.start, stored) <= 0) {
-            /* Image validation failed */
-            LogError(("Image validation failed magic=0x%X", ih->ih_magic));
-            return false;
-        } else {
-            LogInfo(("Image validation succeeded"));
-            return true;
-        }
-#endif
+        return aknano_verify_image(stored);
     } else {
         return false;
     }

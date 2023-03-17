@@ -7,17 +7,19 @@
 
 #define LIBRARY_LOG_LEVEL LOG_INFO
 #include <assert.h>
-#include <stdlib.h>
-#include <stdbool.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-#include "aknano_priv.h"
-#include "aknano_secret.h"
-#include "libtufnano.h"
-
-#include "netif/ethernet.h"
 #include "lwip/netifapi.h"
+#include "netif/ethernet.h"
+#include "transport_secure_sockets.h"
+
+#include "aknano_net.h"
+#include "aknano_secret.h"
+#include "aknano.h"
+#include "libtufnano.h"
 
 
 int init_network_context(struct aknano_network_context *network_context)

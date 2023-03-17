@@ -6,17 +6,26 @@
  */
 
 #define LIBRARY_LOG_LEVEL LOG_INFO
+#define LIBRARY_LOG_NAME "aknano"
+#include "logging_stack.h"
+
 #include <assert.h>
-#include <stdlib.h>
-#include <stdbool.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+#include "core_http_client.h"
+
+#include "libtufnano.h"
 
 #include "aknano_client.h"
-#include "aknano_priv.h"
 #include "aknano_client.h"
+#include "aknano_debug.h"
+#include "aknano_device_gateway.h"
+#include "aknano_net.h"
 #include "aknano_secret.h"
-#include "libtufnano.h"
+#include "aknano.h"
 
 #define AKNANO_DEVICE_GATEWAY_ENDPOINT AKNANO_FACTORY_UUID ".ota-lite.foundries.io"
 
@@ -26,8 +35,6 @@ static const uint32_t akNanoDeviceGateway_ROOT_CERTIFICATE_PEM_LEN = sizeof(AKNA
 
 static char bodyBuffer[500];
 
-
-void UpdateSettingValue(const char *, int);
 
 static void get_time_str(time_t boot_up_epoch, char *output)
 {
@@ -223,7 +230,7 @@ bool aknano_send_event(struct aknano_settings *aknano_settings,
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
     if (!aknano_settings->is_device_registered) {
         LogInfo(("AkNanoSendEvent: Device is not registered. Skipping send of event %s", event_type));
-        return TRUE;
+        return true;
     }
 #endif
 
@@ -231,7 +238,7 @@ bool aknano_send_event(struct aknano_settings *aknano_settings,
 
     xDemoStatus = aknano_connect_to_device_gateway(&network_context);
     if (xDemoStatus != pdPASS)
-        return TRUE;
+        return true;
 
     fill_event_payload(bodyBuffer, aknano_settings, event_type, new_version, success);
 
@@ -250,5 +257,5 @@ bool aknano_send_event(struct aknano_settings *aknano_settings,
 
     /* Close the network connection.  */
     aknano_mtls_disconnect(&network_context);
-    return TRUE;
+    return true;
 }

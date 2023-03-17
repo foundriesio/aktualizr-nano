@@ -6,14 +6,16 @@
 #include <time.h>
 #include <stdio.h>
 
-#include "lwip/opt.h"
 #include "lwip/apps/sntp.h"
-#include "sntp_example.h"
 #include "lwip/netif.h"
+#include "lwip/opt.h"
+#include "sntp_example.h"
 
-#include "aknano_priv.h"
+#include "aknano_device_gateway.h"
+#include "aknano_flash_storage.h"
+#include "aknano_net.h"
 #include "aknano_secret.h"
-
+#include "aknano.h"
 
 /**
  * @brief Test group definition.
