@@ -10,16 +10,43 @@
 #include <time.h>
 #include <stdio.h>
 
-#include "lwip/opt.h"
-#include "lwip/netif.h"
-#include "ini.h"
 #include "backoff_algorithm.h"
+#include "board.h"
+#include "core_http_client.h"
+#include "core_json.h"
+#include "ini.h"
+#include "lwip/netif.h"
+#include "lwip/opt.h"
 
 #include "aknano_client.h"
-#include "aknano_priv.h"
+#include "aknano.h"
+#include "aknano_debug.h"
+#include "aknano_net.h"
 #include "aknano_secret.h"
+#include "aknano_flash_storage.h"
+#include "aknano_image_download.h"
+#include "aknano_device_gateway.h"
+#include "aknano_public_api.h"
+#include "aknano_tuf_client.h"
+#include "aknano_targets_manifest.h"
+
 #include "flexspi_flash_config.h"
 #include "libtufnano.h"
+
+#define AKNANO_MAX_ROLLED_BACK_VERSION_RETRIES  5
+
+/* 5 minutes */
+#define AKNANO_ROLLBACK_RETRY_BACKOFF_BASE 5
+
+/* 10 days */
+#define AKNANO_ROLLBACK_RETRY_MAX_DELAY 60 * 24 * 10
+
+/*
+ * TODO: UpdateSettingValue is defined at client application, but we could have a better interface for that
+ *
+ */
+void UpdateSettingValue(const char *, int);
+
 
 static void fill_network_info(char *output, size_t max_length)
 {
@@ -214,7 +241,7 @@ int aknano_checkin(struct aknano_context *aknano_context)
 #ifdef AKNANO_TEST_ROLLBACK
 #warning "Compiling broken image for rollback test"
         LogError((ANSI_COLOR_RED "This is a rollback test. Rebooting in 5 seconds" ANSI_COLOR_RESET));
-        vTaskDelay(pdMS_TO_TICKS(5000));
+        aknano_delay(5000);
         NVIC_SystemReset();
 #endif
 
@@ -271,7 +298,7 @@ time_t aknano_get_next_rollback_retry_time(struct aknano_settings *aknano_settin
                                       AKNANO_ROLLBACK_RETRY_MAX_DELAY,
                                       AKNANO_MAX_ROLLED_BACK_VERSION_RETRIES);
 
-    aknano_gen_random_bytes(&random_int, sizeof(random_int));
+    aknano_gen_random_bytes((char *)&random_int, sizeof(random_int));
     for (int i = 0; i < aknano_settings->rollback_retry_count; i++)
         BackoffAlgorithm_GetNextBackoff(&retry_params, random_int, &next_retry_backoff);
 
@@ -307,7 +334,7 @@ bool aknano_install_selected_target(struct aknano_context *aknano_context)
 
         LogInfo(("Requesting update on next boot (ReadyForTest)"));
         status_t status;
-        status = bl_update_image_state(kSwapType_ReadyForTest);
+        status = aknano_set_image_ready_for_test();
         if (status != kStatus_Success)
             LogWarn(("Error setting image as ReadyForTest. status=%d", status));
         else
@@ -372,12 +399,12 @@ void aknano_reboot_command()
 #ifdef AKNANO_DISABLE_REBOOT
     LogInfo(("Skipping reboot..."));
     LogInfo(("Halting task execution"));
-    while (1) {
+    while (1)
         ;
-    }
+
 #else
     LogInfo(("Rebooting...."));
-    vTaskDelay(pdMS_TO_TICKS(100));
+    aknano_delay(100);
     NVIC_SystemReset();
 #endif
 }
@@ -475,15 +502,14 @@ void aknano_sample_loop()
         /* If the checkin operation fails for too long after an update, the image may be bad */
         if (!any_checkin_ok && aknano_is_temp_image(&aknano_settings) &&
             get_current_epoch() > startup_epoch + max_offline_time_on_temp_image) {
-
             LogWarn(("* Check-in failed for too long while running a temporary image. Forcing a reboot to initiate rollback process"));
-            vTaskDelay(pdMS_TO_TICKS(2000));
+            aknano_delay(2000);
             aknano_reboot_command();
         }
 
         sleep_time = aknano_get_setting(&aknano_context, "polling_interval");
         sleep_time = limit_sleep_time_range(sleep_time);
         LogInfo(("Sleeping %d seconds. any_checkin_ok=%d temp_image=%d\n\n", sleep_time, any_checkin_ok, aknano_is_temp_image(&aknano_settings)));
-        vTaskDelay(pdMS_TO_TICKS(sleep_time * 1000));
+        aknano_delay(sleep_time * 1000);
     }
 }

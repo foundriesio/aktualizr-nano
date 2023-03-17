@@ -25,8 +25,6 @@
 #include "platform/iot_threads.h"
 #include "types/iot_network_types.h"
 #include "aws_demo.h"
-#include "aknano_priv.h"
-
 
 #include <nxp_iot_agent_config.h>
 #include <iot_agent_network.h>
@@ -68,6 +66,11 @@
 #endif
 
 #include <ex_sss_boot.h>
+
+
+#include "aknano.h"
+#include "aknano_debug.h"
+#include "aknano_flash_storage.h"
 
 extern ex_sss_boot_ctx_t gex_sss_demo_boot_ctx;
 extern ex_sss_cloud_ctx_t gex_sss_demo_tls_ctx;
@@ -451,13 +454,13 @@ bool el2go_agent_stopped = false;
 
 void agent_start_task(void *args)
 {
-    vTaskDelay(15 * 1000 / portTICK_PERIOD_MS);
+    aknano_delay(15 * 1000);
 
     if (is_valid_certificate_available(false)) {
         LogInfo(("EL2GO Agent: Device certificate is already available, skipping agent start"));
         el2go_agent_stopped = true;
         for (;;)
-            vTaskDelay(15 * 1000 / portTICK_PERIOD_MS);
+            aknano_delay(15 * 1000);
         return;
     }
 #if IOT_AGENT_TIME_MEASUREMENT_ENABLE
@@ -487,7 +490,7 @@ void agent_start_task(void *args)
         else
             iot_agent_session_led_failure();
 
-        vTaskDelay(xDelay);
+        aknano_delay(xDelay);
 
         if (is_valid_certificate_available(false)) {
             LogInfo(("EL2GO Agent: Device provisioning done. Stopping agent"));
@@ -497,7 +500,7 @@ void agent_start_task(void *args)
 
     el2go_agent_stopped = true;
     for (;;)
-        vTaskDelay(xDelay);
+        aknano_delay(xDelay);
 // exit:
     return;
 }

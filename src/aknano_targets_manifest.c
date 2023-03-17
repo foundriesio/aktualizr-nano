@@ -9,7 +9,7 @@
 #define LIBRARY_LOG_LEVEL LOG_INFO
 #include "logging_stack.h"
 
-#include "aknano_priv.h"
+#include "aknano.h"
 #include "board.h"
 
 #include <stdio.h>
@@ -188,7 +188,7 @@ int parse_targets_metadata(const char *data, int len, void *application_context)
     start = 0;
     next = 0;
     while ((result = JSON_Iterate(out_value, out_value_len, &start, &next, &pair)) == JSONSuccess) {
-        vTaskDelay(pdMS_TO_TICKS(50)); // Give some time to log task handle trace
+        aknano_delay(50); // Give some time to log task handle trace
         ret = tuf_parse_single_target(pair.key, pair.keyLength, pair.value, pair.valueLength, application_context);
         if (ret < 0) {
             LogError(("Error processing target %.*s", (int)pair.keyLength, pair.key));

@@ -8,8 +8,13 @@
 #define LIBRARY_LOG_LEVEL LOG_INFO
 
 #include "aknano_secret.h"
+#include "aknano_provisioning.h"
+#include "aknano_device_gateway.h"
 #include "aknano_provisioning_secret.h"
-#include "aknano_priv.h"
+#include "aknano.h"
+#include "aknano_debug.h"
+#include "aknano_pkcs11.h"
+#include "aknano_flash_storage.h"
 
 int aknano_gen_device_certificate_and_key(const char *uuid, const char *factory_name, const char *serial_string, unsigned char *cert_buf, unsigned char *key_buf);
 
@@ -75,7 +80,7 @@ int aknano_provision_device()
     vDevModeKeyProvisioning_AkNano((uint8_t *)key_buf,
                                    (uint8_t *)cert_buf);
     LogInfo(("Provisioning done"));
-    vTaskDelay(pdMS_TO_TICKS(5000));
+    aknano_delay(5000);
 #endif
     return ret;
 }
