@@ -5,10 +5,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#define LIBRARY_LOG_LEVEL LOG_INFO
-#define LIBRARY_LOG_NAME "aknano"
-#include "logging_stack.h"
-
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>

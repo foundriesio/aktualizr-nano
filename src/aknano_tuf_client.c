@@ -5,18 +5,15 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#define LIBRARY_LOG_LEVEL LOG_INFO
-
-#include "aknano.h"
-#include "aknano_debug.h"
-#include "aknano_net.h"
-#include "aknano_flash_storage.h"
-#include "aknano_device_gateway.h"
-
 #include <stdio.h>
 #include "core_json.h"
 #include "core_http_client.h"
 
+#include "aknano_debug.h"
+#include "aknano_net.h"
+#include "aknano_flash_storage.h"
+#include "aknano_device_gateway.h"
+#include "aknano.h"
 #include "libtufnano.h"
 
 #define JSON_ARRAY_LIMIT_COUNT 10

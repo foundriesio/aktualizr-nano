@@ -5,7 +5,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#define LIBRARY_LOG_LEVEL LOG_INFO
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -16,6 +15,7 @@
 #include "netif/ethernet.h"
 #include "transport_secure_sockets.h"
 
+#include "aknano_debug.h"
 #include "aknano_net.h"
 #include "aknano_secret.h"
 #include "aknano.h"

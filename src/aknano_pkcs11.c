@@ -5,8 +5,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#define LIBRARY_LOG_LEVEL LOG_INFO
-
 #include "aws_demo_config.h"
 #include "aws_dev_mode_key_provisioning.h"
 #include "board.h"
@@ -15,6 +13,7 @@
 #include "mbedtls/pem.h"
 #include "pkcs11t.h"
 
+#include "aknano_debug.h"
 #include "aknano_pkcs11.h"
 #include "aknano.h"
 

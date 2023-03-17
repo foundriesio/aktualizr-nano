@@ -5,8 +5,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#define LIBRARY_LOG_LEVEL LOG_INFO
-
 #include <time.h>
 #include <stdio.h>
 

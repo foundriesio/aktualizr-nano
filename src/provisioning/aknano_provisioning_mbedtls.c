@@ -5,8 +5,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#define LIBRARY_LOG_LEVEL LOG_INFO
-
 #ifdef AKNANO_ALLOW_PROVISIONING
 #include <mbedtls/x509_csr.h>
 #include <mbedtls/x509_crt.h>
