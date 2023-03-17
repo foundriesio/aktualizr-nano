@@ -178,7 +178,8 @@ int parse_targets_metadata(const char *data, int len, void *application_context)
         return TUF_ERROR_INVALID_METADATA;
     }
 
-    result = JSON_SearchConst(data, len, "signed" TUF_JSON_QUERY_KEY_SEPARATOR "targets", strlen("signed" TUF_JSON_QUERY_KEY_SEPARATOR "targets"), &out_value, &out_value_len, NULL);
+    result = JSON_SearchConst(data, len, "signed" TUF_JSON_QUERY_KEY_SEPARATOR "targets",
+                              strlen("signed" TUF_JSON_QUERY_KEY_SEPARATOR "targets"), &out_value, &out_value_len, NULL);
     if (result != JSONSuccess) {
         LogError(("parse_targets_metadata: \"signed" TUF_JSON_QUERY_KEY_SEPARATOR "targets\" not found"));
         return TUF_ERROR_FIELD_MISSING;

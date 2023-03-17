@@ -63,7 +63,8 @@ int tuf_client_read_local_file(enum tuf_role role, unsigned char *target_buffer,
 
     initial_offset = get_flash_offset_for_role(role);
     if (initial_offset < 0) {
-        LogError((ANSI_COLOR_MAGENTA "tuf_client_read_local_file: role=%s error reading flash" ANSI_COLOR_RESET, tuf_get_role_name(role)));
+        LogError((ANSI_COLOR_MAGENTA "tuf_client_read_local_file: role=%s error reading flash" ANSI_COLOR_RESET,
+                  tuf_get_role_name(role)));
         return -1;
     }
 
@@ -75,11 +76,13 @@ int tuf_client_read_local_file(enum tuf_role role, unsigned char *target_buffer,
                 tuf_client_write_local_file(role, target_buffer, *file_size, application_context);
             return ret;
         }
-        LogInfo((ANSI_COLOR_MAGENTA "tuf_client_read_local_file: role=%s file not found. buf[0]=%X" ANSI_COLOR_RESET, tuf_get_role_name(role), target_buffer[0]));
+        LogInfo((ANSI_COLOR_MAGENTA "tuf_client_read_local_file: role=%s file not found. buf[0]=%X" ANSI_COLOR_RESET,
+                 tuf_get_role_name(role), target_buffer[0]));
         return -1; // File not found / read error
     }
 
-    LogInfo((ANSI_COLOR_MAGENTA "tuf_client_read_local_file: role=%s file_size=%d strlen=%d OK" ANSI_COLOR_RESET, tuf_get_role_name(role), *file_size, strlen((const char *)target_buffer)));
+    LogInfo((ANSI_COLOR_MAGENTA "tuf_client_read_local_file: role=%s file_size=%d strlen=%d OK" ANSI_COLOR_RESET,
+             tuf_get_role_name(role), *file_size, strlen((const char *)target_buffer)));
     return TUF_SUCCESS;
 }
 
@@ -92,7 +95,8 @@ int tuf_client_write_local_file(enum tuf_role role, const unsigned char *data, s
     initial_offset = get_flash_offset_for_role(role);
     // LogInfo(("write_local_file: role=%d initial_offset=%d len=%d", role, initial_offset, len));
     ret = aknano_write_data_to_storage(initial_offset, data, len);
-    LogInfo((ANSI_COLOR_MAGENTA "tuf_client_write_local_file: role=%s len=%d %s" ANSI_COLOR_RESET, tuf_get_role_name(role), len, ret? "ERROR" : "OK"));
+    LogInfo((ANSI_COLOR_MAGENTA "tuf_client_write_local_file: role=%s len=%d %s" ANSI_COLOR_RESET,
+             tuf_get_role_name(role), len, ret? "ERROR" : "OK"));
 
     return ret;
 }
@@ -111,10 +115,12 @@ int tuf_client_fetch_file(const char *file_base_name, unsigned char *target_buff
         aknano_context->settings);
 
     if (ret == pdPASS) {
-        LogInfo((ANSI_COLOR_MAGENTA "tuf_client_fetch_file: %s HTTP operation return code %d. Body length=%ld" ANSI_COLOR_RESET, file_base_name, aknano_context->dg_network_context->reply_http_code, aknano_context->dg_network_context->reply_body_len));
+        LogInfo((ANSI_COLOR_MAGENTA "tuf_client_fetch_file: %s HTTP operation return code %d. Body length=%ld" ANSI_COLOR_RESET,
+                 file_base_name, aknano_context->dg_network_context->reply_http_code, aknano_context->dg_network_context->reply_body_len));
         if ((aknano_context->dg_network_context->reply_http_code / 100) == 2) {
             if (aknano_context->dg_network_context->reply_body_len > target_buffer_len) {
-                LogError(("tuf_client_fetch_file: %s retrieved file is too big. Maximum %ld, got %ld", file_base_name, target_buffer_len, aknano_context->dg_network_context->reply_body_len));
+                LogError(("tuf_client_fetch_file: %s retrieved file is too big. Maximum %ld, got %ld",
+                          file_base_name, target_buffer_len, aknano_context->dg_network_context->reply_body_len));
                 return TUF_ERROR_DATA_EXCEEDS_BUFFER_SIZE;
             }
             *file_size = aknano_context->dg_network_context->reply_body_len;
