@@ -1,3 +1,7 @@
+# Unit test build directory
+tests/build/*
+
+
 # Prerequisites
 *.d
 

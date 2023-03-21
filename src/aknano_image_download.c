@@ -14,6 +14,7 @@
 #include "aknano_debug.h"
 #include "aknano_flash_storage.h"
 #include "aknano_net.h"
+#include "aknano_secret.h"
 #include "aknano.h"
 
 #define AKNANO_REQUEST_BODY ""
@@ -27,11 +28,7 @@
  */
 #define httpexampleHTTP_STATUS_CODE_PARTIAL_CONTENT          206
 
-
-
-#include "aknano_secret.h"
 static const char downloadServer_ROOT_CERTIFICATE_PEM[] = AKNANO_DEVICE_GATEWAY_CERTIFICATE;
-
 #define AKNANO_DOWNLOAD_ENDPOINT_LEN sizeof(AKNANO_DOWNLOAD_ENDPOINT) - 1
 
 static const uint32_t donwloadServer_ROOT_CERTIFICATE_LENGTH = sizeof(downloadServer_ROOT_CERTIFICATE_PEM);

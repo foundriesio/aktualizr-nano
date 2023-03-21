@@ -30,10 +30,7 @@
  */
 uint8_t ucUserBuffer[AKNANO_IMAGE_DOWNLOAD_BUFFER_LENGTH];
 
-void aknano_delay(uint32_t ms)
-{
-    vTaskDelay(pdMS_TO_TICKS(ms));
-}
+
 
 void aknano_init_settings(struct aknano_settings *aknano_settings)
 {
