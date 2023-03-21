@@ -6,10 +6,12 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+#include <errno.h>
 
 #include "core_json.h"
 
-#include "board.h"
+// #include "board.h"
 
 #include "aknano_debug.h"
 #include "aknano.h"
@@ -73,7 +75,7 @@ static int tuf_parse_single_target(const char *target_key, size_t target_key_len
             return 0;
     } else {
         LogInfo(("handle_json_data: custom/version not found\n"));
-        return 0;
+        return -1;
     }
 
     result = JSON_SearchConst(data, len, "custom/hardwareIds", strlen("custom/hardwareIds"), &out_value, &out_value_len, NULL);
@@ -91,7 +93,7 @@ static int tuf_parse_single_target(const char *target_key, size_t target_key_len
         }
     } else {
         LogInfo(("handle_json_data: custom/hardwareIds not found\n"));
-        return 0;
+        return -1;
     }
     if (!found_match) {
         LogInfo(("Matching hardwareId not found (%s)", aknano_context->settings->hwid));
@@ -114,7 +116,7 @@ static int tuf_parse_single_target(const char *target_key, size_t target_key_len
         }
     } else {
         LogInfo(("handle_json_data: custom/tags not found\n"));
-        return 0;
+        return -1;
     }
     if (!found_match) {
         LogInfo(("Matching tag not found (%s)", aknano_context->settings->tag));
@@ -133,15 +135,15 @@ static int tuf_parse_single_target(const char *target_key, size_t target_key_len
     result = JSON_SearchConst(data, len, "hashes/sha256", strlen("hashes/sha256"), &out_value, &out_value_len, NULL);
     if (result != JSONSuccess) {
         LogInfo(("handle_json_data: hashes/sha256 not found\n"));
-        return 0;
+        return -1;
     }
     if (out_value_len != AKNANO_SHA256_LEN * 2) {
         LogInfo(("handle_json_data: hashes/sha256 string has invalid length: %d\n", out_value_len));
-        return 0;
+        return -1;
     }
     if (hex_to_bin((unsigned char *)out_value, (unsigned char *)&target.expected_hash, AKNANO_SHA256_LEN)) {
         LogInfo(("handle_json_data: hashes/sha256 string is not a valid hex value: '%.*s'\n", out_value_len, out_value));
-        return 0;
+        return -1;
     }
 
     /* Handle length */
@@ -169,6 +171,22 @@ int parse_targets_metadata(const char *data, int len, void *application_context)
     size_t out_value_len;
     size_t start, next;
     JSONPair_t pair;
+    struct aknano_context *aknano_context = (struct aknano_context *)application_context;
+
+    if (!application_context) {
+        LogError(("Application context can't be NULL"));
+        return -EINVAL;
+    }
+
+    if (!aknano_context->settings->hwid) {
+        LogError(("HWID can't be NULL"));
+        return -EINVAL;
+    }
+
+    if (!aknano_context->settings->tag[0]) {
+        LogError(("Tag can't be empty"));
+        return -EINVAL;
+    }
 
     result = JSON_Validate(data, len);
     if (result != JSONSuccess) {

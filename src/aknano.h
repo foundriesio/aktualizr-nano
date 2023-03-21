@@ -9,13 +9,13 @@
 #define __AKNANO_PRIV_H__
 
 #include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include <time.h>
 
 #include "mbedtls/sha256.h"
 
-#include "board.h"
-
-#define AKNANO_BOARD_NAME BOARD_NAME
+#include "aknano_platform.h"
 
 #define RECV_BUFFER_SIZE 1640
 #define URL_BUFFER_SIZE 300
