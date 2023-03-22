@@ -5,8 +5,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef __AKNANO_PROVISIONING_H__
-#define __AKNANO_PROVISIONING_H__
+#ifndef __AKNANO_PROVISIONING_SECRET_H__
+#define __AKNANO_PROVISIONING_SECRET_H__
 
 #ifdef AKNANO_ALLOW_PROVISIONING
 
