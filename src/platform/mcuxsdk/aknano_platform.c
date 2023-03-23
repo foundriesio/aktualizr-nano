@@ -1,3 +1,9 @@
+/*
+ * Copyright 2023 Foundries.io
+ * All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
 
 #include <time.h>
 #include <stdio.h>
