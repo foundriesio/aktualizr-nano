@@ -27,7 +27,7 @@ bool aknano_verify_image(size_t image_size);
 
 uint32_t aknano_get_target_slot_address(uint8_t current_image_position);
 
-void aknano_get_current_version(int *running_version, int image_position);
+void aknano_get_current_version(uint32_t *running_version, int image_position);
 int aknano_get_image_position();
 
 #ifdef AKNANO_ALLOW_PROVISIONING

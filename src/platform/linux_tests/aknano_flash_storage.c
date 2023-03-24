@@ -78,7 +78,7 @@ void aknano_get_current_image_state(struct aknano_settings *aknano_settings)
     aknano_settings->is_image_permanent = true;
 }
 
-void aknano_get_current_version(int *running_version, int image_position)
+void aknano_get_current_version(uint32_t *running_version, int image_position)
 {
     *running_version = 1000;
 }

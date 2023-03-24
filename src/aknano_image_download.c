@@ -6,6 +6,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 
 // #include "flexspi_flash_config.h"
@@ -102,7 +103,7 @@ static BaseType_t aknano_download_image(
     xNumReqBytes = AKNANO_IMAGE_DOWNLOAD_REQUEST_LENGTH;
     xStatus = pdPASS;
 
-    int32_t stored = 0;
+    size_t stored = 0;
 
     /* Initialize SHA256 calculation for FW image */
     mbedtls_sha256_init(&aknano_context->sha256_context);
@@ -159,11 +160,11 @@ static BaseType_t aknano_download_image(
     aknano_mtls_disconnect(network_context);
 
     if (stored != aknano_context->selected_target.expected_size) {
-        LogInfo((ANSI_COLOR_MAGENTA "Actual file size (%ld bytes) does not match expected size (%ld bytes)" ANSI_COLOR_RESET, 
+        LogInfo((ANSI_COLOR_MAGENTA "Actual file size (%lu bytes) does not match expected size (%lu bytes)" ANSI_COLOR_RESET, 
                  stored, aknano_context->selected_target.expected_size));
         xStatus = pdFAIL;
     } else {
-        LogInfo((ANSI_COLOR_MAGENTA "Actual file size (%ld bytes) matches expected size (%ld bytes)" ANSI_COLOR_RESET, 
+        LogInfo((ANSI_COLOR_MAGENTA "Actual file size (%lu bytes) matches expected size (%lu bytes)" ANSI_COLOR_RESET, 
                  stored, aknano_context->selected_target.expected_size));
     }
 

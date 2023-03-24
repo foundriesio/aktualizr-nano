@@ -7,6 +7,7 @@
 
 #include <time.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "backoff_algorithm.h"
 #include "core_json.h"
@@ -14,6 +15,7 @@
 
 #include "aknano.h"
 #include "aknano_debug.h"
+#include "aknano_client.h"
 #include "aknano_net.h"
 #include "aknano_secret.h"
 #include "aknano_flash_storage.h"
@@ -99,29 +101,30 @@ static void replace_escaped_chars(char *dst, const char *src, size_t len)
 static void parse_config(const char *config_data, int buffer_len, struct aknano_settings *aknano_settings)
 {
     JSONStatus_t result = JSON_Validate(config_data, buffer_len);
-    char *value;
-    unsigned int valueLength;
+    const char *value;
+    size_t value_length;
     int int_value;
+    JSONTypes_t data_type;
 
     if (result == JSONSuccess) {
         static char unescaped_toml[200];
 
         memset(unescaped_toml, 0, sizeof(unescaped_toml));
-        result = JSON_Search(config_data, buffer_len,
+        result = JSON_SearchConst(config_data, buffer_len,
                              "z-50-fioctl.toml" TUF_JSON_QUERY_KEY_SEPARATOR "Value",
                              strlen("z-50-fioctl.toml" TUF_JSON_QUERY_KEY_SEPARATOR "Value"),
-                             &value, &valueLength);
-        if (valueLength < sizeof(unescaped_toml)) {
-            replace_escaped_chars(unescaped_toml, value, valueLength);
+                             &value, &value_length, &data_type);
+        if (value_length < sizeof(unescaped_toml)) {
+            replace_escaped_chars(unescaped_toml, value, value_length);
             ini_parse_string(unescaped_toml, toml_handler, aknano_settings);
         } else {
-            LogWarn(("z-50-fioctl.toml too big, skipping parsing. Size=%ld, limit=%ld", valueLength, sizeof(unescaped_toml)));
+            LogWarn(("z-50-fioctl.toml too big, skipping parsing. Size=%ld, limit=%ld", value_length, sizeof(unescaped_toml)));
         }
 
-        result = JSON_Search(config_data, buffer_len,
+        result = JSON_SearchConst(config_data, buffer_len,
                              "polling_interval" TUF_JSON_QUERY_KEY_SEPARATOR "Value",
                              strlen("polling_interval" TUF_JSON_QUERY_KEY_SEPARATOR "Value"),
-                             &value, &valueLength);
+                             &value, &value_length, &data_type);
 
         if (result == JSONSuccess) {
             if (sscanf(value, "%d", &int_value) <= 0) {
@@ -137,10 +140,10 @@ static void parse_config(const char *config_data, int buffer_len, struct aknano_
             LogInfo(("parse_config_data: polling_interval config not found"));
         }
 
-        result = JSON_Search(config_data, buffer_len,
+        result = JSON_SearchConst(config_data, buffer_len,
                              "btn_polling_interval" TUF_JSON_QUERY_KEY_SEPARATOR "Value",
                              strlen("btn_polling_interval" TUF_JSON_QUERY_KEY_SEPARATOR "Value"),
-                             &value, &valueLength);
+                             &value, &value_length, &data_type);
 
         if (result == JSONSuccess) {
             if (sscanf(value, "%d", &int_value) <= 0)
@@ -162,7 +165,7 @@ void aknano_init_context(struct aknano_context * aknano_context,
 
 int aknano_checkin(struct aknano_context *aknano_context)
 {
-    static char bodyBuffer[200];
+    static char body_buffer[250];
 
     struct aknano_network_context network_context;
     BaseType_t xDemoStatus;
@@ -175,7 +178,7 @@ int aknano_checkin(struct aknano_context *aknano_context)
 #ifdef AKNANO_DUMP_MEMORY_USAGE_INFO
     aknano_dump_memory_info("Before aknano_checkin");
 #endif
-    LogInfo(("aknano_checkin. Version=%lu  Tag=%s", aknano_settings->running_version, aknano_settings->tag));
+    LogInfo(("aknano_checkin. Version=%u  Tag=%s", aknano_settings->running_version, aknano_settings->tag));
 
     xDemoStatus = aknano_connect_to_device_gateway(&network_context);
     if (xDemoStatus == pdPASS) {
@@ -192,7 +195,7 @@ int aknano_checkin(struct aknano_context *aknano_context)
                 parse_config((const char *)network_context.reply_body, network_context.reply_body_len, aknano_context->settings);
         }
 
-        snprintf(bodyBuffer, sizeof(bodyBuffer),
+        snprintf(body_buffer, sizeof(body_buffer),
                  "{ " \
                  " \"product\": \"%s\"," \
                  " \"description\": \"Aktualizr-nano PoC\"," \
@@ -204,16 +207,16 @@ int aknano_checkin(struct aknano_context *aknano_context)
                  AKNANO_BOARD_NAME, aknano_settings->serial, AKNANO_BOARD_NAME);
 
         aknano_send_http_request(&network_context, HTTP_METHOD_PUT,
-                                 "/system_info", bodyBuffer, strlen(bodyBuffer),
+                                 "/system_info", body_buffer, strlen(body_buffer),
                                  aknano_context->settings);
 
-        fill_network_info(bodyBuffer, sizeof(bodyBuffer));
+        fill_network_info(body_buffer, sizeof(body_buffer));
         aknano_send_http_request(&network_context, HTTP_METHOD_PUT,
-                                 "/system_info/network", bodyBuffer, strlen(bodyBuffer),
+                                 "/system_info/network", body_buffer, strlen(body_buffer),
                                  aknano_context->settings);
 
         // LogInfo(("aknano_settings->tag=%s",aknano_settings->tag));
-        sprintf(bodyBuffer,
+        sprintf(body_buffer,
                 "[aknano_settings]\n" \
                 "poll_interval = %d\n" \
                 "hw_id = \"%s\"\n" \
@@ -224,7 +227,7 @@ int aknano_checkin(struct aknano_context *aknano_context)
                 AKNANO_BOARD_NAME,
                 aknano_settings->tag);
         aknano_send_http_request(&network_context, HTTP_METHOD_PUT,
-                                 "/system_info/config", bodyBuffer, strlen(bodyBuffer),
+                                 "/system_info/config", body_buffer, strlen(body_buffer),
                                  aknano_context->settings);
 
         time_t reference_time = get_current_epoch(aknano_settings->boot_up_epoch);
@@ -285,7 +288,7 @@ bool aknano_is_rollback(struct aknano_context *aknano_context)
 
 time_t aknano_get_next_rollback_retry_time(struct aknano_settings *aknano_settings)
 {
-    BackoffAlgorithmStatus_t retry_status = BackoffAlgorithmSuccess;
+    // BackoffAlgorithmStatus_t retry_status = BackoffAlgorithmSuccess;
     BackoffAlgorithmContext_t retry_params;
     uint16_t next_retry_backoff = 0; /* in minutes */
     uint32_t random_int;
@@ -347,7 +350,7 @@ bool aknano_install_selected_target(struct aknano_context *aknano_context)
         aknano_settings->rollback_retry_count++;
         // }
         aknano_settings->rollback_next_retry_time = aknano_get_next_rollback_retry_time(aknano_settings);
-        LogInfo(("*** rollback_retry_count=%d rollback_next_retry_time=%lu",
+        LogInfo(("*** rollback_retry_count=%u rollback_next_retry_time=%lu",
                  aknano_settings->rollback_retry_count, aknano_settings->rollback_next_retry_time));
     }
 
@@ -386,7 +389,7 @@ uint32_t aknano_get_current(struct aknano_context *aknano_context)
     return aknano_context->settings->running_version;
 }
 
-int aknano_get_selected_version(struct aknano_context *aknano_context)
+uint32_t aknano_get_selected_version(struct aknano_context *aknano_context)
 {
     return aknano_context->selected_target.version;
 }
@@ -447,20 +450,20 @@ void aknano_sample_loop()
             any_checkin_ok = true;
             if (aknano_has_matching_target(&aknano_context)) {
                 uint32_t current = aknano_get_current(&aknano_context);
-                int selected = aknano_get_selected_version(&aknano_context);
+                uint32_t selected = aknano_get_selected_version(&aknano_context);
                 bool is_rollback = aknano_is_rollback(&aknano_context);
                 bool should_retry_rollback = false;
 
                 if (is_rollback)
                     should_retry_rollback = aknano_should_retry_rollback(&aknano_context);
 
-                LogInfo(("* Manifest data parsing result: current version=%ld selected version=%ld is_rollback=%s should_retry_rollback=%s",
+                LogInfo(("* Manifest data parsing result: current version=%u selected version=%u is_rollback=%s should_retry_rollback=%s",
                          current, selected, is_rollback? "YES" : "NO", should_retry_rollback? "YES" : "NO"));
 
                 if (is_rollback && !should_retry_rollback) {
                     LogInfo(("* Selected version was already applied (and failed). Do not retrying it"));
                 } else if (current < selected) {
-                    LogInfo((ANSI_COLOR_GREEN "* Update required: %lu -> %ld" ANSI_COLOR_RESET,
+                    LogInfo((ANSI_COLOR_GREEN "* Update required: %u -> %u" ANSI_COLOR_RESET,
                              current, selected));
                     is_update_required = true;
                 } else {

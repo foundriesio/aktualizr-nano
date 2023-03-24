@@ -6,8 +6,9 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+
 #include "core_json.h"
-// #include "core_http_client.h"
 
 #include "aknano_debug.h"
 #include "aknano_net.h"
@@ -41,7 +42,7 @@ static int read_local_json_file(int initial_offset, unsigned char *target_buffer
     if (target_buffer[0] != '{')
         return -1;
 
-    for (int i = 0; i < target_buffer_len; i++) {
+    for (size_t i = 0; i < target_buffer_len; i++) {
         if (target_buffer[i] == 0xFF) {
             target_buffer[i] = 0;
             break;
@@ -78,7 +79,7 @@ int tuf_client_read_local_file(enum tuf_role role, unsigned char *target_buffer,
         return -1; // File not found / read error
     }
 
-    LogInfo((ANSI_COLOR_MAGENTA "tuf_client_read_local_file: role=%s file_size=%d strlen=%d OK" ANSI_COLOR_RESET,
+    LogInfo((ANSI_COLOR_MAGENTA "tuf_client_read_local_file: role=%s file_size=%lu strlen=%lu OK" ANSI_COLOR_RESET,
              tuf_get_role_name(role), *file_size, strlen((const char *)target_buffer)));
     return TUF_SUCCESS;
 }
@@ -92,7 +93,7 @@ int tuf_client_write_local_file(enum tuf_role role, const unsigned char *data, s
     initial_offset = get_flash_offset_for_role(role);
     // LogInfo(("write_local_file: role=%d initial_offset=%d len=%d", role, initial_offset, len));
     ret = aknano_write_data_to_storage(initial_offset, data, len);
-    LogInfo((ANSI_COLOR_MAGENTA "tuf_client_write_local_file: role=%s len=%d %s" ANSI_COLOR_RESET,
+    LogInfo((ANSI_COLOR_MAGENTA "tuf_client_write_local_file: role=%s len=%lu %s" ANSI_COLOR_RESET,
              tuf_get_role_name(role), len, ret? "ERROR" : "OK"));
 
     return ret;

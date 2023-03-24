@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "aknano_debug.h"
 #include "aknano_net.h"
@@ -74,15 +75,15 @@ void aknano_mtls_disconnect(struct aknano_network_context *network_context)
 
 void aknano_get_ipv4_and_mac(char *ipv4, uint8_t *mac)
 {
-    ipv4[0] = 192;
-    ipv4[1] = 168;
-    ipv4[2] = 0;
-    ipv4[3] = 20;
+    ipv4[0] = (char)192;
+    ipv4[1] = (char)168;
+    ipv4[2] = (char)0;
+    ipv4[3] = (char)20;
 
-    mac[0] = 80;
-    mac[1] = 80;
-    mac[2] = 80;
-    mac[3] = 80;
-    mac[4] = 80;
-    mac[5] = 80;
+    mac[0] = (char)80;
+    mac[1] = (char)80;
+    mac[2] = (char)80;
+    mac[3] = (char)80;
+    mac[4] = (char)80;
+    mac[5] = (char)80;
 }
