@@ -25,8 +25,8 @@
 #define AKNANO_MAX_URI_LENGTH 120
 #define AKNANO_CERT_BUF_SIZE 1024
 #define AKNANO_MAX_DEVICE_NAME_SIZE 100
-#define AKNANO_MAX_UUID_LENGTH 100
-#define AKNANO_MAX_SERIAL_LENGTH 100
+#define AKNANO_MAX_UUID_LENGTH 40
+#define AKNANO_MAX_SERIAL_LENGTH 50
 #define AKNANO_MAX_UPDATE_CORRELATION_ID_LENGTH 100
 
 #define AKNANO_MAX_FIRMWARE_SIZE 0x100000
@@ -111,7 +111,7 @@
 struct aknano_target {
     char    updatedAt[AKNANO_MAX_UPDATE_AT_LENGTH];
     size_t  expected_size;
-    int32_t version;
+    uint32_t version;
     uint8_t expected_hash[AKNANO_SHA256_LEN];
 };
 
@@ -122,10 +122,10 @@ struct aknano_settings {
     char        uuid[AKNANO_MAX_UUID_LENGTH];
     char        serial[AKNANO_MAX_SERIAL_LENGTH];
     uint32_t    running_version;
-    int         last_applied_version;
-    int         last_confirmed_version;
+    uint32_t    last_applied_version;
+    uint32_t    last_confirmed_version;
     int         rollback_retry_count;
-    int         rollback_next_retry_time;
+    time_t      rollback_next_retry_time;
     int         polling_interval;
     time_t      boot_up_epoch;
     char        ongoing_update_correlation_id[AKNANO_MAX_UPDATE_CORRELATION_ID_LENGTH];

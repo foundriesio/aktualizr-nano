@@ -7,6 +7,7 @@
 
 #include <time.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "aknano.h"
 #include "aknano_debug.h"
@@ -58,31 +59,31 @@ void aknano_init_settings(struct aknano_settings *aknano_settings)
     aknano_get_current_version(&aknano_settings->running_version, aknano_settings->image_position);
     if (aknano_settings->running_version == UINT_MAX)
         aknano_settings->running_version = 0;
-    LogInfo(("aknano_init_settings: aknano_settings->running_version=%lu",
+    LogInfo(("aknano_init_settings: aknano_settings->running_version=%u",
              aknano_settings->running_version));
 
     aknano_read_flash_storage(AKNANO_FLASH_OFF_DEV_SERIAL, aknano_settings->serial,
                               sizeof(aknano_settings->serial));
-    if (aknano_settings->serial[0] == 0xff)
+    if (aknano_settings->serial[0] < 0)
         aknano_settings->serial[0] = 0;
     LogInfo(("aknano_init_settings: serial=%s", aknano_settings->serial));
 
     aknano_read_flash_storage(AKNANO_FLASH_OFF_DEV_UUID, aknano_settings->uuid,
                               sizeof(aknano_settings->uuid));
-    if (aknano_settings->uuid[0] == 0xff)
+    if (aknano_settings->uuid[0] < 0)
         aknano_settings->uuid[0] = 0;
     LogInfo(("aknano_init_settings: uuid=%s", aknano_settings->uuid));
 
     aknano_read_flash_storage(AKNANO_FLASH_OFF_LAST_APPLIED_VERSION,
                               &aknano_settings->last_applied_version,
                               sizeof(aknano_settings->last_applied_version));
-    if (aknano_settings->last_applied_version < 0 || aknano_settings->last_applied_version > 999999999)
+    if (aknano_settings->last_applied_version > 999999999)
         aknano_settings->last_applied_version = 0;
     LogInfo(("aknano_init_settings: last_applied_version=%d", aknano_settings->last_applied_version));
 
     aknano_read_flash_storage(AKNANO_FLASH_OFF_LAST_CONFIRMED_VERSION, &aknano_settings->last_confirmed_version,
                               sizeof(aknano_settings->last_confirmed_version));
-    if (aknano_settings->last_confirmed_version < 0 || aknano_settings->last_confirmed_version > 999999999)
+    if (aknano_settings->last_confirmed_version > 999999999)
         aknano_settings->last_confirmed_version = 0;
     LogInfo(("aknano_init_settings: last_confirmed_version=%d",
              aknano_settings->last_confirmed_version));
@@ -90,7 +91,7 @@ void aknano_init_settings(struct aknano_settings *aknano_settings)
     aknano_read_flash_storage(AKNANO_FLASH_OFF_ONGOING_UPDATE_COR_ID,
                               &aknano_settings->ongoing_update_correlation_id,
                               sizeof(aknano_settings->ongoing_update_correlation_id));
-    if (aknano_settings->ongoing_update_correlation_id[0] == 0xFF)
+    if (aknano_settings->ongoing_update_correlation_id[0] < 0)
         aknano_settings->ongoing_update_correlation_id[0] = 0;
     LogInfo(("aknano_init_settings: ongoing_update_correlation_id=%s",
              aknano_settings->ongoing_update_correlation_id));
@@ -107,7 +108,7 @@ void aknano_init_settings(struct aknano_settings *aknano_settings)
     aknano_read_flash_storage(AKNANO_FLASH_OFF_ROLLBACK_NEXT_RETRY_TIME,
                               &aknano_settings->rollback_next_retry_time,
                               sizeof(aknano_settings->rollback_next_retry_time));
-    if (aknano_settings->rollback_next_retry_time < 0)
+    if (aknano_settings->rollback_next_retry_time == UINT32_MAX)
         aknano_settings->rollback_next_retry_time = 0;
     aknano_delay(100);
     LogInfo(("aknano_init_settings: rollback_next_retry_time=%lu",

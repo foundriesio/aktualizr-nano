@@ -8,6 +8,8 @@
 #ifndef __AKNANO_DEBUG_H__
 #define __AKNANO_DEBUG_H__
 
+#include <stdio.h>
+
 /*
  * Generic ANSI colors escape codes, used in console output
  */

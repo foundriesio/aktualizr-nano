@@ -56,7 +56,7 @@ static int tuf_parse_single_target(const char *target_key, size_t target_key_len
 
     memset(&target, 0, sizeof(target));
 
-    LogInfo(("tuf_client_parse_single_target: %.*s", target_key_len, target_key));
+    LogInfo(("tuf_client_parse_single_target: %.*s", (int)target_key_len, target_key));
     // LogInfo(("handle_json_data: Parsing target data with len=%d", len));
     JSONStatus_t result = JSON_Validate(data, len);
 
@@ -69,7 +69,7 @@ static int tuf_parse_single_target(const char *target_key, size_t target_key_len
     found_match = false;
     result = JSON_SearchConst(data, len, "custom/version", strlen("custom/version"), &out_value, &out_value_len, NULL);
     if (result == JSONSuccess) {
-        sscanf(out_value, "%ld", &target.version);
+        sscanf(out_value, "%u", (unsigned*)&target.version);
         // LogInfo(("tuf_parse_single_target: version=%d selected_version=%d\n", version, aknano_context->selected_target.version));
         if (target.version <= aknano_context->selected_target.version)
             return 0;
@@ -138,11 +138,11 @@ static int tuf_parse_single_target(const char *target_key, size_t target_key_len
         return -1;
     }
     if (out_value_len != AKNANO_SHA256_LEN * 2) {
-        LogInfo(("handle_json_data: hashes/sha256 string has invalid length: %d\n", out_value_len));
+        LogInfo(("handle_json_data: hashes/sha256 string has invalid length: %lu\n", out_value_len));
         return -1;
     }
     if (hex_to_bin((unsigned char *)out_value, (unsigned char *)&target.expected_hash, AKNANO_SHA256_LEN)) {
-        LogInfo(("handle_json_data: hashes/sha256 string is not a valid hex value: '%.*s'\n", out_value_len, out_value));
+        LogInfo(("handle_json_data: hashes/sha256 string is not a valid hex value: '%.*s'\n", (int)out_value_len, out_value));
         return -1;
     }
 
@@ -152,7 +152,7 @@ static int tuf_parse_single_target(const char *target_key, size_t target_key_len
         LogInfo(("handle_json_data: length not found\n"));
         return 0;
     }
-    sscanf(out_value, "%u", &target.expected_size);
+    sscanf(out_value, "%u", (unsigned*)&target.expected_size);
 
     /* All good, update selected_target */
     memcpy(&aknano_context->selected_target, &target, sizeof(aknano_context->selected_target));

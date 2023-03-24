@@ -10,9 +10,11 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "libtufnano.h"
 
+#include "aknano_client.h"
 #include "aknano_debug.h"
 #include "aknano_device_gateway.h"
 #include "aknano_net.h"
@@ -26,7 +28,6 @@
 static const uint32_t akNanoDeviceGateway_ROOT_CERTIFICATE_PEM_LEN = sizeof(AKNANO_DEVICE_GATEWAY_CERTIFICATE);
 
 static char bodyBuffer[500];
-
 
 static void get_time_str(time_t boot_up_epoch, char *output)
 {
@@ -86,9 +87,9 @@ int aknano_gen_serial_and_uuid(char *uuid_string, char *serial_string)
 static bool fill_event_payload(char *payload,
                                struct aknano_settings *aknano_settings,
                                const char *event_type,
-                               int new_version, bool success)
+                               uint32_t new_version, bool success)
 {
-    int old_version = aknano_settings->running_version;
+    uint32_t old_version = aknano_settings->running_version;
     char details[200];
     char current_time_str[50];
     char *correlation_id = aknano_settings->ongoing_update_correlation_id;
@@ -107,24 +108,24 @@ static bool fill_event_payload(char *payload,
         old_version = aknano_settings->last_confirmed_version;
         new_version = aknano_settings->running_version;
     }
-    snprintf(target, sizeof(target), "%s-v%d", aknano_settings->hwid, new_version);
+    snprintf(target, sizeof(target), "%s-v%lu", aknano_settings->hwid, (unsigned long)new_version);
 
     if (strnlen(correlation_id, AKNANO_MAX_UPDATE_CORRELATION_ID_LENGTH) == 0)
         snprintf(correlation_id, AKNANO_MAX_UPDATE_CORRELATION_ID_LENGTH, "%s-%s", target, aknano_settings->uuid);
 
     if (!strcmp(event_type, AKNANO_EVENT_INSTALLATION_APPLIED)) {
-        snprintf(details, sizeof(details), "Updating from v%d to v%d tag: %s. Image written to flash. Rebooting.",
-                 old_version, new_version, aknano_settings->tag);
+        snprintf(details, sizeof(details), "Updating from v%lu to v%lu tag: %s. Image written to flash. Rebooting.",
+                 (unsigned long)old_version, (unsigned long)new_version, aknano_settings->tag);
     } else if (!strcmp(event_type, AKNANO_EVENT_INSTALLATION_COMPLETED)) {
         if (!success)
-            snprintf(details, sizeof(details), "Rollback to v%d after failed update to v%d.",
-                     old_version, aknano_settings->last_applied_version);
+            snprintf(details, sizeof(details), "Rollback to v%lu after failed update to v%lu.",
+                     (unsigned long)old_version, (unsigned long)aknano_settings->last_applied_version);
         else
-            snprintf(details, sizeof(details), "Updated from v%d to v%d. Image confirmed. Running on %s slot.",
-                     old_version, new_version, aknano_settings->image_position == 1? "PRIMARY" : "SECONDARY");
+            snprintf(details, sizeof(details), "Updated from v%lu to v%lu. Image confirmed. Running on %s slot.",
+                     (unsigned long)old_version, (unsigned long)new_version, aknano_settings->image_position == 1? "PRIMARY" : "SECONDARY");
     } else {
-        snprintf(details, sizeof(details), "Updating from v%d to v%d tag: %s.",
-                 old_version, new_version, aknano_settings->tag);
+        snprintf(details, sizeof(details), "Updating from v%lu to v%lu tag: %s.",
+                 (unsigned long)old_version, (unsigned long)new_version, aknano_settings->tag);
     }
 
     get_time_str(aknano_settings->boot_up_epoch, current_time_str);
@@ -142,13 +143,13 @@ static bool fill_event_payload(char *payload,
              "\"event\": {" \
              "\"correlationId\": \"%s\"," \
              "\"targetName\": \"%s\"," \
-             "\"version\": \"%d\"," \
+             "\"version\": \"%lu\"," \
              "%s" \
              "\"details\": \"%s\"" \
              "}" \
              "}]",
              evt_uuid, current_time_str, event_type,
-             correlation_id, target, new_version,
+             correlation_id, target, (unsigned long)new_version,
              success_string, details);
     LogInfo(("Event: %s %s %s", event_type, details, success_string));
     return true;
