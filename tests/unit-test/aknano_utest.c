@@ -5,6 +5,7 @@
 
 #include "aknano.h"
 #include "aknano_public_api.h"
+#include "aknano_net.h"
 #include "aknano_targets_manifest.h"
 #include "libtufnano.h"
 // #include "catch_assert.h"
@@ -95,4 +96,20 @@ void test_aknano_targets_manifest( void )
     memset(&aknano_context.selected_target, 0, sizeof(aknano_context.selected_target));
     ret = parse_targets_metadata(JSON_NO_SHA256, strlen(JSON_NO_SHA256), &aknano_context);
     TEST_ASSERT_EQUAL(TUF_SUCCESS, ret);
+}
+
+void test_aknano_net( void )
+{
+    struct aknano_network_context aknano_network_context;
+
+    init_network_context(&aknano_network_context);
+    aknano_network_context.source_path = "test_path";
+    aknano_mtls_connect(&aknano_network_context, "hostname", strlen("hostname"), 8080, "", strlen(""));
+    aknano_mtls_disconnect(&aknano_network_context);
+}
+
+
+void test_sample_loop()
+{
+    aknano_sample_loop();
 }

@@ -11,12 +11,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "core_http_client.h"
-
 #include "libtufnano.h"
 
-#include "aknano_client.h"
-#include "aknano_client.h"
 #include "aknano_debug.h"
 #include "aknano_device_gateway.h"
 #include "aknano_net.h"

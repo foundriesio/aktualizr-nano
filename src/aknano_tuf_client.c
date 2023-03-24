@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 #include "core_json.h"
-#include "core_http_client.h"
+// #include "core_http_client.h"
 
 #include "aknano_debug.h"
 #include "aknano_net.h"

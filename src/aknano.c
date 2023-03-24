@@ -14,10 +14,13 @@
 #include "aknano_flash_storage.h"
 #include "aknano_device_gateway.h"
 #include "aknano_provisioning.h"
-#include "aknano_pkcs11.h"
 
-#include "mcuboot_app_support.h"
-#include "task.h"
+#if defined(AKNANO_ENABLE_EXPLICIT_REGISTRATION) || defined(AKNANO_ALLOW_PROVISIONING) || defined(AKNANO_RESET_DEVICE_ID)
+#include "aknano_pkcs11.h"
+#endif
+
+// #include "mcuboot_app_support.h"
+// #include "task.h"
 
 
 /**
@@ -48,11 +51,11 @@ void aknano_init_settings(struct aknano_settings *aknano_settings)
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
     aknano_read_device_certificate(aknano_settings->device_certificate, sizeof(aknano_settings->device_certificate));
 #endif
-    aknano_settings->image_position = get_active_image() + 1;
+    aknano_settings->image_position = aknano_get_image_position();
 
     LogInfo(("aknano_init_settings: image_position=%u", aknano_settings->image_position));
 
-    bl_get_image_build_num(&aknano_settings->running_version, aknano_settings->image_position);
+    aknano_get_current_version(&aknano_settings->running_version, aknano_settings->image_position);
     if (aknano_settings->running_version == UINT_MAX)
         aknano_settings->running_version = 0;
     LogInfo(("aknano_init_settings: aknano_settings->running_version=%lu",

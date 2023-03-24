@@ -10,6 +10,18 @@
 
 #include <stdint.h>
 
+#include "mbedtls/compat-2.x.h"
+
+typedef long BaseType_t;
+#define pdFALSE                                  ( ( BaseType_t ) 0 )
+#define pdTRUE                                   ( ( BaseType_t ) 1 )
+
+#define pdPASS                                   ( pdTRUE )
+#define pdFAIL                                   ( pdFALSE )
+
+
+typedef int32_t status_t;
+
 #define AKNANO_BOARD_NAME "MIMXRT1060"
 
 void aknano_delay(uint32_t ms);

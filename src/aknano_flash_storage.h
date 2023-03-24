@@ -10,8 +10,6 @@
 
 #include <stddef.h>
 
-#include "fsl_common.h"
-
 #include "aknano.h"
 
 void aknano_update_settings_in_flash(struct aknano_settings *aknano_settings);
@@ -28,6 +26,9 @@ void aknano_get_current_image_state(struct aknano_settings *aknano_settings);
 bool aknano_verify_image(size_t image_size);
 
 uint32_t aknano_get_target_slot_address(uint8_t current_image_position);
+
+void aknano_get_current_version(int *running_version, int image_position);
+int aknano_get_image_position();
 
 #ifdef AKNANO_ALLOW_PROVISIONING
 status_t aknano_save_uuid_and_serial(const char *uuid, const char *serial);

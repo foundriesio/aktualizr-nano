@@ -205,6 +205,15 @@ void aknano_get_current_image_state(struct aknano_settings *aknano_settings)
     aknano_settings->is_image_permanent = is_image_permanent;
 }
 
+void aknano_get_current_version(int *running_version, int image_position)
+{
+    bl_get_image_build_num(running_version, image_position);
+}
+
+int aknano_get_image_position()
+{
+    return get_active_image() + 1;
+}
 
 #ifdef AKNANO_ALLOW_PROVISIONING
 static status_t aknano_clear_flash_sector(int offset)

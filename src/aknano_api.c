@@ -9,14 +9,9 @@
 #include <stdio.h>
 
 #include "backoff_algorithm.h"
-#include "board.h"
-#include "core_http_client.h"
 #include "core_json.h"
 #include "ini.h"
-#include "lwip/netif.h"
-#include "lwip/opt.h"
 
-#include "aknano_client.h"
 #include "aknano.h"
 #include "aknano_debug.h"
 #include "aknano_net.h"
@@ -24,11 +19,12 @@
 #include "aknano_flash_storage.h"
 #include "aknano_image_download.h"
 #include "aknano_device_gateway.h"
+#include "aknano_platform.h"
 #include "aknano_public_api.h"
 #include "aknano_tuf_client.h"
 #include "aknano_targets_manifest.h"
 
-#include "flexspi_flash_config.h"
+// #include "flexspi_flash_config.h"
 #include "libtufnano.h"
 
 #define AKNANO_MAX_ROLLED_BACK_VERSION_RETRIES  5
@@ -336,7 +332,7 @@ bool aknano_install_selected_target(struct aknano_context *aknano_context)
         LogInfo(("Requesting update on next boot (ReadyForTest)"));
         status_t status;
         status = aknano_set_image_ready_for_test();
-        if (status != kStatus_Success)
+        if (status)
             LogWarn(("Error setting image as ReadyForTest. status=%d", status));
         else
             is_reboot_required = true;
@@ -393,21 +389,6 @@ uint32_t aknano_get_current(struct aknano_context *aknano_context)
 int aknano_get_selected_version(struct aknano_context *aknano_context)
 {
     return aknano_context->selected_target.version;
-}
-
-void aknano_reboot_command()
-{
-#ifdef AKNANO_DISABLE_REBOOT
-    LogInfo(("Skipping reboot..."));
-    LogInfo(("Halting task execution"));
-    while (1)
-        ;
-
-#else
-    LogInfo(("Rebooting...."));
-    aknano_delay(100);
-    NVIC_SystemReset();
-#endif
 }
 
 int aknano_get_setting(struct aknano_context *aknano_context, const char *setting_name)
