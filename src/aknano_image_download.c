@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "flexspi_flash_config.h"
+// #include "flexspi_flash_config.h"
 #include "mbedtls/sha256.h"
 
 #include "aknano_debug.h"
@@ -98,7 +98,6 @@ static BaseType_t aknano_download_image(
 
 
     dst_partition_phys_addr = aknano_get_target_slot_address(image_position);
-    configASSERT(pcPath != NULL);
 
     xNumReqBytes = AKNANO_IMAGE_DOWNLOAD_REQUEST_LENGTH;
     xStatus = pdPASS;

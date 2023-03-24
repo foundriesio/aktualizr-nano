@@ -8,7 +8,14 @@
 #include <stdint.h>
 #include <unistd.h>
 
+#include "aknano_debug.h"
+
 void aknano_delay(uint32_t ms)
 {
-//     usleep(ms * 1000);
+     usleep(ms * 1000);
+}
+
+void aknano_reboot_command()
+{
+    LogInfo(("Test code. Skipping reboot..."));
 }
