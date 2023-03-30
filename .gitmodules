@@ -16,3 +16,6 @@
 [submodule "tests/unit-test/inih"]
 	path = tests/unit-test/inih
 	url = https://github.com/benhoyt/inih.git
+[submodule "tests/unit-test/CMock"]
+	path = tests/unit-test/CMock
+	url = https://github.com/ThrowTheSwitch/CMock.git
