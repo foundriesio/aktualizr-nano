@@ -162,6 +162,7 @@ bool aknano_verify_image(size_t image_size)
 #endif
 }
 
+// TODO: interface could be better
 void aknano_set_image_confirmed(struct aknano_settings *aknano_settings)
 {
     if (!aknano_settings->is_image_permanent) {
@@ -183,7 +184,7 @@ uint32_t aknano_get_target_slot_address(uint8_t current_image_position)
         return FLASH_AREA_IMAGE_2_OFFSET;
 }
 
-void aknano_get_current_image_state(struct aknano_settings *aknano_settings)
+bool aknano_is_current_image_permanent()
 {
     uint32_t currentStatus;
     bool is_image_permanent = false;
@@ -201,8 +202,6 @@ void aknano_get_current_image_state(struct aknano_settings *aknano_settings)
     } else {
         LogWarn((ANSI_COLOR_RED "Error getting image state"));
     }
-
-    aknano_settings->is_image_permanent = is_image_permanent;
 }
 
 void aknano_get_current_version(uint32_t *running_version, int image_position)
