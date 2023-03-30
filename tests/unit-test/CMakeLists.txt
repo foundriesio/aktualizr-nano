@@ -5,6 +5,34 @@ include( ${LIBTUFNANO_DIR}/tufFilePaths.cmake )
 set(project_name "aknano")
 
 # =====================  Create your mock here  (edit)  ========================
+# =====================  Create your mock here  (edit)  ========================
+
+# list the files to mock here
+    list(APPEND mock_list
+        ${MODULE_ROOT_DIR}/src/aknano_net.h
+        ${MODULE_ROOT_DIR}/src/aknano_flash_storage.h
+    )
+# list the directories your mocks need
+    list(APPEND mock_include_list
+        ${MODULE_ROOT_DIR}/tests/unit-test/CMock/src
+        ${MODULE_ROOT_DIR}/tests/unit-test/Unity/src
+        ${MBEDTLS_DIR}/include/
+        ${MODULE_ROOT_DIR}/src/
+        ${MODULE_ROOT_DIR}/src/platform/linux_tests
+        # ${CMAKE_CURRENT_LIST_DIR}
+        # ${abstraction_dir}/ble_hal/include
+        # ${abstraction_dir}/platform/include
+        # ${abstraction_dir}/platform/freertos/include
+        # ${abstraction_dir}/platform/include
+        # "${AFR_ROOT_DIR}/libraries/c_sdk/standard/common/include"
+    )
+#list the definitions of your mocks to control what to be included
+    # list(APPEND mock_define_list
+	# 	portUSING_MPU_WRAPPERS=1
+    #     MPU_WRAPPERS_INCLUDED_FROM_API_FILE
+    #     portHAS_STACK_OVERFLOW_CHECKING=1
+    # )
+
 # ================= Create the library under test here (edit) ==================
 
 # Base name for temporary files
@@ -56,13 +84,23 @@ list(APPEND test_include_directories
 # =============================  (end edit)  ===================================
 
 set(real_name "${project_name}_real")
+set(mock_name "${project_name}_mock")
+
+create_mock_list(${mock_name}
+            "${mock_list}"
+            "${CMAKE_SOURCE_DIR}/../tools/cmock/project.yml"
+            "${mock_include_list}"
+            "${mock_define_list}"
+        )
 
 create_real_library(${real_name}
                     "${real_source_files}"
                     "${real_include_directories}"
+                    "${mock_name}"
         )
 
 list(APPEND utest_link_list
+            -l${mock_name}
             lib${real_name}.a
         )
 
