@@ -31,6 +31,9 @@ static const char *json_targets = \
 "{\"signatures\":[{\"keyid\":\"061277e11d1c8b1c6abe97a774bb6f94295e6e7fa6242d8e86356f0ee8ea3cab\",\"method\":\"ed25519\",\"sig\":\"A0YRwaf2jrcMnee1Ao2d5//Fp/S3B/iio1Ml9muFdNcnzhWG4V3yo6PThRv4UaVOdesrnYubwt4/IP5QjUTTDg==\"}],\"signed\":{\"_type\":\"Targets\",\"expires\":\"2023-04-28T19:15:59Z\",\"targets\":{\"MIMXRT1060-EVK-v1001\":{\"custom\":{\"createdAt\":\"2023-03-29T19:15:59Z\",\"createdBy\":\"61263c864de34394ed8b66e4\",\"hardwareIds\":[\"MIMXRT1060-EVK\"],\"name\":\"MIMXRT1060-EVK-v1001\",\"tags\":[\"devel\"],\"targetFormat\":\"BINARY\",\"updatedAt\":\"2023-03-29T19:15:59Z\",\"version\":\"1001\"},\"hashes\":{\"sha256\":\"3566613982b3935eaad38f5468abf916d17b24409c2f5793b8fe1ec4b0e12f0a\"},\"length\":52560},\"MIMXRT1060-EVK-v4000\":{\"custom\":{\"createdAt\":\"2023-03-29T19:12:03Z\",\"createdBy\":\"61263c864de34394ed8b66e4\",\"hardwareIds\":[\"MIMXRT1060-EVK\"],\"name\":\"MIMXRT1060-EVK-v4000\",\"tags\":[\"devel\"],\"targetFormat\":\"BINARY\",\"updatedAt\":\"2023-03-29T19:12:03Z\",\"version\":\"4000\"},\"hashes\":{\"sha256\":\"6412338049eed6bf15a9a8a5fe8b1b2773a9a4306a7610af30529ea16157a8a8\"},\"length\":52560}},\"version\":168}}";
 #define JSON_TARGETS_HIGHER_VERSION 4000
 
+#define TEST_TAG "devel"
+static const char *config_toml = \
+"{\"z-50-fioctl.toml\":{\"Value\":\"[pacman]\\ntags = \\\"" TEST_TAG "\\\"\\n\",\"Unencrypted\":true,\"OnChanged\":[\"/usr/share/fioconfig/handlers/aktualizr-toml-update\"]}}";
 
 #define JSON_INVALID "{"
 #define JSON_EMPTY "{}"
@@ -269,7 +272,10 @@ BaseType_t stub_aknano_mtls_send_http_request(
     network_context->reply_http_code = 0;
 
     if (strcmp(pcMethod, HTTP_METHOD_GET) == 0) {
-        if (strcmp(pcPath, "/repo/13.root.json") == 0) {
+        if (strcmp(pcPath, "/config") == 0) {
+            network_context->reply_body = config_toml;
+            network_context->reply_body_len = strlen(network_context->reply_body);
+        } else if (strcmp(pcPath, "/repo/13.root.json") == 0) {
             network_context->reply_body = json_root_13;
             network_context->reply_body_len = strlen(network_context->reply_body);
         } else if (strcmp(pcPath, "/repo/timestamp.json") == 0) {
@@ -381,6 +387,8 @@ void test_aknano_api()
 
     // aknano_read_flash_storage()
     aknano_init(&aknano_settings);
+    /* Make sure we get the right tag from the config file */
+    strcpy(aknano_settings.tag, "invalid");
 
     /*
      * Tell aktualizr-nano that it is OK to set the current image as permanent
@@ -414,6 +422,8 @@ void test_aknano_api()
         // set_ipv4_and_mac_mock();
         checkin_result = aknano_checkin(&aknano_context);
         TEST_ASSERT(checkin_result == 0);
+        TEST_ASSERT_EQUAL_STRING(TEST_TAG, aknano_context.settings->tag);
+
         if (checkin_result == 0) {
             /* Check-in successful. Check selected target */
             bool is_update_required = false;
