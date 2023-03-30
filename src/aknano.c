@@ -335,5 +335,5 @@ void aknano_init(struct aknano_settings *aknano_settings)
     LogWarn((ANSI_COLOR_RED "**** Sleeping for 20 seconds ****" ANSI_COLOR_RESET));
     aknano_delay(20000);
 #endif
-    aknano_get_current_image_state(aknano_settings);
+    aknano_settings->is_image_permanent = aknano_is_current_image_permanent();
 }

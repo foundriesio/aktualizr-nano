@@ -21,7 +21,7 @@ status_t aknano_write_data_to_storage(int offset, const void *data, size_t data_
 
 status_t aknano_set_image_ready_for_test();
 void aknano_set_image_confirmed(struct aknano_settings *aknano_settings);
-void aknano_get_current_image_state(struct aknano_settings *aknano_settings);
+bool aknano_is_current_image_permanent();
 
 bool aknano_verify_image(size_t image_size);
 
