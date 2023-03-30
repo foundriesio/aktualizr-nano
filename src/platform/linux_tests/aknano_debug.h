@@ -23,9 +23,9 @@
 
 void aknano_dump_memory_info(const char *context);
 
-#define LogError(X) printf X
-#define LogWarn(X) printf X
-#define LogInfo(X) printf X
-#define LogDebug(X) printf X
+#define LogError(X) do { printf X; printf("\r\n"); } while (0)
+#define LogWarn(X) do { printf X; printf("\r\n"); } while (0)
+#define LogInfo(X) do { printf X; printf("\r\n"); } while (0)
+#define LogDebug(X) do { printf X; printf("\r\n"); } while (0)
 
 #endif
