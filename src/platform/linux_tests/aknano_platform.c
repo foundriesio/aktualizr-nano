@@ -19,3 +19,5 @@ void aknano_reboot_command()
 {
     LogInfo(("Test code. Skipping reboot..."));
 }
+
+void UpdateSettingValue(const char* name, int value){} // move to flash_*.h

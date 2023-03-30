@@ -22,7 +22,8 @@ typedef long BaseType_t;
 
 typedef int32_t status_t;
 
-#define AKNANO_BOARD_NAME "MIMXRT1060"
+// TODO mock this value
+#define AKNANO_BOARD_NAME "MIMXRT1060-EVK"
 
 void aknano_delay(uint32_t ms);
 

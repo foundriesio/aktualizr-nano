@@ -12,6 +12,8 @@
 
 struct aknano_network_context {
     const char *source_path;
+    bool is_connected;
+
 
     /* Platform independent fields */
     const unsigned char *          reply_body;

@@ -67,19 +67,22 @@ target_compile_options(coverity_analysis PUBLIC -DNDEBUG )
 
 target_compile_options(coverity_analysis PUBLIC -DTUF_JSON_QUERY_KEY_SEPARATOR='/')
 
-#  ====================================  Test Configuration ========================================
+# ============================ Test configuration ==============================
 
-# Include Unity build configuration.
-include( unit-test/unity_build.cmake )
+# Define a CMock resource path.
+set( CMOCK_DIR ${MODULE_ROOT_DIR}/tests/unit-test/CMock CACHE INTERNAL "CMock library source directory." )
 
-# Check if the Unity source directory exists, and if not present, clone the submodule
+# Include CMock build configuration.
+include( unit-test/cmock_build.cmake )
+
+# Check if the CMock source directory exists, and if not present, clone the submodule
 # if BUILD_CLONE_SUBMODULES configuration is enabled.
-if( NOT EXISTS ${UNITY_DIR}/src )
-    # Attempt to clone Unity.
+if( NOT EXISTS ${CMOCK_DIR}/src )
+    # Attempt to clone CMock.
     if( ${BUILD_CLONE_SUBMODULES} )
-        clone_unity()
+        clone_cmock()
     else()
-        message( FATAL_ERROR "The required submodule Unity does not exist. Either clone it manually, or set BUILD_CLONE_SUBMODULES to 1 to automatically clone it during build." )
+        message( FATAL_ERROR "The required submodule CMock does not exist. Either clone it manually, or set BUILD_CLONE_SUBMODULES to 1 to automatically clone it during build." )
     endif()
 endif()
 
@@ -89,11 +92,11 @@ endif()
 # defining test targets with add_test()
 enable_testing()
 
-# Add build targets for Unity and Unit, required for unit testing.
-add_unity_targets()
+# Add build targets for CMock and Unit, required for unit testing.
+add_cmock_targets()
 
-# Add function to enable Unity based tests and coverage.
-include( ${MODULE_ROOT_DIR}/tools/unity/create_test.cmake )
+# Add function to enable CMock based tests and coverage.
+include( ${MODULE_ROOT_DIR}/tools/cmock/create_test.cmake )
 
 # Include build configuration for unit tests.
 add_subdirectory( unit-test )
@@ -102,8 +105,8 @@ add_subdirectory( unit-test )
 
 # Add a target for running coverage on tests.
 add_custom_target( coverage
-    COMMAND ${CMAKE_COMMAND} -DUNITY_DIR=${UNITY_DIR}
-    -P ${MODULE_ROOT_DIR}/tools/unity/coverage.cmake
-    DEPENDS mbedtls libtufnano libtufnano_client unity aknano_utest
+    COMMAND ${CMAKE_COMMAND} -DCMOCK_DIR=${CMOCK_DIR}
+    -P ${MODULE_ROOT_DIR}/tools/cmock/coverage.cmake
+    DEPENDS cmock mbedtls libtufnano libtufnano_client unity aknano_utest
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
