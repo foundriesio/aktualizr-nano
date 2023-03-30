@@ -221,8 +221,8 @@ void aknano_mtls_disconnect(struct aknano_network_context *network_context)
 }
 
 extern struct netif netif;
-void aknano_get_ipv4_and_mac(char *ipv4, uint8_t *mac)
+void aknano_get_ipv4_and_mac(uint8_t *ipv4, uint8_t *mac)
 {
-    memcpy(ipv4, (char *)&netif.ip_addr.addr, 4);
+    memcpy(ipv4, (uint8_t *)&netif.ip_addr.addr, 4);
     memcpy(mac, netif.hwaddr, 6);
 }

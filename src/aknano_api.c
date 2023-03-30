@@ -46,7 +46,7 @@ void UpdateSettingValue(const char *, int);
 
 static void fill_network_info(char *output, size_t max_length)
 {
-    char ipv4[4];
+    uint8_t ipv4[4];
     uint8_t mac[6];
 
     aknano_get_ipv4_and_mac(ipv4, mac);
