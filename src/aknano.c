@@ -330,7 +330,7 @@ void aknano_init(struct aknano_settings *aknano_settings)
     tuf_client_write_local_file(ROLE_ROOT, "\xFF", 1, NULL);
     tuf_client_write_local_file(ROLE_TIMESTAMP, "\xFF", 1, NULL);
     tuf_client_write_local_file(ROLE_SNAPSHOT, "\xFF", 1, NULL);
-    tuf_client_write_local_file(ROLE_ROOT, "\xFF", 1, NULL);
+    tuf_client_write_local_file(ROLE_TARGETS, "\xFF", 1, NULL);
 
     LogWarn((ANSI_COLOR_RED "**** Sleeping for 20 seconds ****" ANSI_COLOR_RESET));
     aknano_delay(20000);
