@@ -125,16 +125,6 @@ void test_aknano_targets_manifest( void )
     TEST_ASSERT_EQUAL(TUF_SUCCESS, ret);
 }
 
-// void test_aknano_net( void )
-// {
-//     struct aknano_network_context aknano_network_context;
-//     init_network_context(&aknano_network_context);
-
-//     aknano_network_context.source_path = "test_path";
-//     aknano_mtls_connect(&aknano_network_context, "hostname", strlen("hostname"), 8080, "", strlen(""));
-//     aknano_mtls_disconnect(&aknano_network_context);
-// }
-
 void stub_aknano_get_ipv4_and_mac(uint8_t *ip, uint8_t *mac)
 {
     uint8_t default_ip[] = { 192, 0, 0, 10};
@@ -142,33 +132,6 @@ void stub_aknano_get_ipv4_and_mac(uint8_t *ip, uint8_t *mac)
 
     memcpy(ip, default_ip, sizeof(default_ip));
     memcpy(mac, default_mac, sizeof(default_mac));
-}
-
-// static void set_ipv4_and_mac_mock()
-// {
-
-//     char default_ip[] = { 192, 0, 0, 10};
-//     char default_mac[] = { 0x85, 0x81, 0x82, 0x83, 0x84, 0x85};
-//     aknano_get_ipv4_and_mac_ExpectAnyArgs();
-//     aknano_get_ipv4_and_mac_ReturnThruPtr_ipv4(default_ip);
-//     aknano_get_ipv4_and_mac_ReturnThruPtr_mac(default_mac);
-//     aknano_get_ipv4_and_mac_Ignore();
-// }
-
-// void test_ipv4()
-// {
-//     uint8_t ip[4];
-//     uint8_t mac[6];
-
-
-//     aknano_get_ipv4_and_mac(ip, mac);
-//     TEST_ASSERT_EQUAL(ip[0], 192);
-//     TEST_ASSERT_EQUAL(mac[0], 80);
-// }
-
-void test_sample_loop()
-{
-    // aknano_sample_loop();
 }
 
 static char in_memory_flash[1024 * 1024 * 8];
@@ -377,13 +340,11 @@ void test_aknano_api()
     const int image_position = 1;
     uint32_t version = AKANANO_TEST_VERSION;
     aknano_get_image_position_ExpectAndReturn(image_position);
-    // aknano_get_current_version_ExpectAnyArgs();
     aknano_get_current_version_Expect(NULL, image_position);
     aknano_get_current_version_IgnoreArg_running_version();
     aknano_get_current_version_ReturnThruPtr_running_version(&version);
     aknano_read_flash_storage_StubWithCallback(stub_aknano_read_flash_storage);
     aknano_is_current_image_permanent_IgnoreAndReturn(true);
-    // aknano_read_flash_storage_IgnoreAndReturn(0);
 
     // aknano_read_flash_storage()
     aknano_init(&aknano_settings);
@@ -497,4 +458,39 @@ void test_aknano_api()
         break;
         aknano_delay(sleep_time * 1000);
     }
+}
+
+void test_aknano_default_loop()
+{
+    uint32_t remaining_iterations = 1;
+
+    initialize_test_flash();
+
+    /* For initialization */
+    const int image_position = 1;
+    uint32_t version = AKANANO_TEST_VERSION;
+    aknano_get_image_position_ExpectAndReturn(image_position);
+    aknano_get_current_version_Expect(NULL, image_position);
+    aknano_get_current_version_IgnoreArg_running_version();
+    aknano_get_current_version_ReturnThruPtr_running_version(&version);
+    aknano_read_flash_storage_StubWithCallback(stub_aknano_read_flash_storage);
+    aknano_is_current_image_permanent_IgnoreAndReturn(true);
+
+    /* Per iteration */
+    init_network_context_StubWithCallback(stub_aknano_init_network_context);
+    aknano_mtls_connect_StubWithCallback(stub_aknano_mtls_connect);
+    aknano_mtls_disconnect_StubWithCallback(stub_aknano_mtls_disconnect);
+    aknano_mtls_send_http_request_StubWithCallback(stub_aknano_mtls_send_http_request);
+    aknano_write_data_to_storage_StubWithCallback(stub_aknano_write_data_to_storage);
+    aknano_set_image_confirmed_ExpectAnyArgs();
+    aknano_get_ipv4_and_mac_StubWithCallback(stub_aknano_get_ipv4_and_mac);
+
+    /* Per update */
+    aknano_get_target_slot_address_StubWithCallback(stub_aknano_get_target_slot_address);
+    aknano_write_data_to_flash_StubWithCallback(stub_aknano_write_data_to_flash);
+    aknano_update_settings_in_flash_StubWithCallback(stub_aknano_update_settings_in_flash);
+    aknano_verify_image_IgnoreAndReturn(true);
+    aknano_set_image_ready_for_test_IgnoreAndReturn(0);
+
+    aknano_sample_loop(&remaining_iterations);
 }

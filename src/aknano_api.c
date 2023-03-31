@@ -413,7 +413,7 @@ int limit_sleep_time_range(int sleep_time)
         return sleep_time;
 }
 
-void aknano_sample_loop()
+void aknano_sample_loop(uint32_t *remaining_iterations)
 {
     static struct aknano_settings aknano_settings;
     time_t startup_epoch = get_current_epoch();
@@ -429,10 +429,13 @@ void aknano_sample_loop()
      * checkin is done at the factory device gateway
      */
     aknano_set_application_self_test_ok(&aknano_settings);
-    while (true) {
+    while (remaining_iterations == NULL || *remaining_iterations > 0) {
         static struct aknano_context aknano_context;
         int checkin_result;
         int sleep_time;
+
+        if (remaining_iterations != NULL)
+            (*remaining_iterations)--;
 
         /* Initialize execution context */
         aknano_init_context(&aknano_context, &aknano_settings);
@@ -496,6 +499,9 @@ void aknano_sample_loop()
         sleep_time = limit_sleep_time_range(sleep_time);
         LogInfo(("Sleeping %d seconds. any_checkin_ok=%d temp_image=%d\n\n",
                  sleep_time, any_checkin_ok, aknano_is_temp_image(&aknano_settings)));
-        aknano_delay(sleep_time * 1000);
+
+        if (*remaining_iterations > 0)
+            aknano_delay(sleep_time * 1000);
+        break;
     }
 }
