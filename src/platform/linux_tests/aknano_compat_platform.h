@@ -5,8 +5,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef __AKNANO_PLATFORM_H__
-#define __AKNANO_PLATFORM_H__
+#ifndef __AKNANO_COMPAT_PLATFORM_H__
+#define __AKNANO_COMPAT_PLATFORM_H__
 
 #include <stdint.h>
 
@@ -19,12 +19,6 @@ typedef long BaseType_t;
 #define pdPASS                                   ( pdTRUE )
 #define pdFAIL                                   ( pdFALSE )
 
-
 typedef int32_t status_t;
-
-// TODO mock this value
-#define AKNANO_BOARD_NAME "MIMXRT1060-EVK"
-
-void aknano_delay(uint32_t ms);
 
 #endif

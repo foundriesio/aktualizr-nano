@@ -125,7 +125,7 @@ void aknano_init_settings(struct aknano_settings *aknano_settings)
 
     snprintf(aknano_settings->device_name, sizeof(aknano_settings->device_name),
              "%s-%s",
-             AKNANO_BOARD_NAME, aknano_settings->serial);
+             aknano_get_board_name(), aknano_settings->serial);
 
     LogInfo(("aknano_init_settings: device_name=%s",
              aknano_settings->device_name));
@@ -138,7 +138,7 @@ void aknano_init_settings(struct aknano_settings *aknano_settings)
     LogInfo(("aknano_init_settings: is_running_rolled_back_image=%d",
              aknano_settings->is_running_rolled_back_image));
 
-    aknano_settings->hwid = AKNANO_BOARD_NAME;
+    aknano_settings->hwid = aknano_get_board_name();
 }
 
 // #define AKNANO_TEST_ROLLBACK

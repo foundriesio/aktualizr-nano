@@ -8,7 +8,7 @@
 #ifndef __AKNANO_DEBUG_H__
 #define __AKNANO_DEBUG_H__
 
-#include <stdio.h>
+#include "aknano_debug_platform.h"
 
 /*
  * Generic ANSI colors escape codes, used in console output
@@ -22,10 +22,4 @@
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
 void aknano_dump_memory_info(const char *context);
-
-#define LogError(X) do { printf X; printf("\r\n"); } while (0)
-#define LogWarn(X) do { printf X; printf("\r\n"); } while (0)
-#define LogInfo(X) do { printf X; printf("\r\n"); } while (0)
-#define LogDebug(X) do { printf X; printf("\r\n"); } while (0)
-
 #endif

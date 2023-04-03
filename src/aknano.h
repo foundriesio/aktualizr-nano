@@ -15,7 +15,7 @@
 
 #include "mbedtls/sha256.h"
 
-#include "aknano_platform.h"
+#include "aknano_board.h"
 
 #define RECV_BUFFER_SIZE 1640
 #define URL_BUFFER_SIZE 300
