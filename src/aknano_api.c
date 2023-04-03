@@ -21,7 +21,7 @@
 #include "aknano_flash_storage.h"
 #include "aknano_image_download.h"
 #include "aknano_device_gateway.h"
-#include "aknano_platform.h"
+#include "aknano_board.h"
 #include "aknano_public_api.h"
 #include "aknano_tuf_client.h"
 #include "aknano_targets_manifest.h"
@@ -204,7 +204,7 @@ int aknano_checkin(struct aknano_context *aknano_context)
                  " \"id\": \"%s\", " \
                  " \"class\": \"MCU\" " \
                  "}",
-                 AKNANO_BOARD_NAME, aknano_settings->serial, AKNANO_BOARD_NAME);
+                 aknano_get_board_name(), aknano_settings->serial, aknano_get_board_name());
 
         aknano_send_http_request(&network_context, HTTP_METHOD_PUT,
                                  "/system_info", body_buffer, strlen(body_buffer),
@@ -224,7 +224,7 @@ int aknano_checkin(struct aknano_context *aknano_context)
                 "binary_compilation_local_time = \""__DATE__ " " __TIME__ "\"\n"
                 "provisioning_mode = \"" AKNANO_PROVISIONING_MODE "\"",
                 aknano_settings->polling_interval,
-                AKNANO_BOARD_NAME,
+                aknano_get_board_name(),
                 aknano_settings->tag);
         aknano_send_http_request(&network_context, HTTP_METHOD_PUT,
                                  "/system_info/config", body_buffer, strlen(body_buffer),

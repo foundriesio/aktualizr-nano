@@ -12,8 +12,14 @@
 #include "mcuboot_app_support.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "board.h"
 
 #include "aknano_debug.h"
+
+const char *aknano_get_board_name()
+{
+    return BOARD_NAME;
+}
 
 void aknano_delay(uint32_t ms)
 {

@@ -2,7 +2,7 @@
 #include <sys/random.h>
 #include <time.h>
 
-#include "aknano_platform.h"
+#include "aknano_board.h"
 
 time_t get_current_epoch()
 {

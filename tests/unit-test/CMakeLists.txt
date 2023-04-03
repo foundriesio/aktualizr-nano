@@ -11,6 +11,8 @@ set(project_name "aknano")
     list(APPEND mock_list
         ${MODULE_ROOT_DIR}/src/aknano_net.h
         ${MODULE_ROOT_DIR}/src/aknano_flash_storage.h
+        ${MODULE_ROOT_DIR}/src/aknano_board.h
+        ${MODULE_ROOT_DIR}/src/aknano_debug.h
     )
 # list the directories your mocks need
     list(APPEND mock_include_list
