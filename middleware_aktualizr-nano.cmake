@@ -14,7 +14,6 @@ target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/src/platform/mcuxsdk/aknano_net.c
     ${CMAKE_CURRENT_LIST_DIR}/src/platform/mcuxsdk/aknano_pkcs11.c
     ${CMAKE_CURRENT_LIST_DIR}/src/platform/mcuxsdk/aknano_platform.c
-    ${CMAKE_CURRENT_LIST_DIR}/src/platform/mcuxsdk/aknano_rest_api.c
 )
 
 target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
