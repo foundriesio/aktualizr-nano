@@ -500,8 +500,7 @@ void aknano_sample_loop(uint32_t *remaining_iterations)
         LogInfo(("Sleeping %d seconds. any_checkin_ok=%d temp_image=%d\n\n",
                  sleep_time, any_checkin_ok, aknano_is_temp_image(&aknano_settings)));
 
-        if (*remaining_iterations > 0)
+        if (remaining_iterations == NULL || *remaining_iterations > 0)
             aknano_delay(sleep_time * 1000);
-        break;
     }
 }
