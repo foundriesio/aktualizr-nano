@@ -230,7 +230,7 @@ int aknano_checkin(struct aknano_context *aknano_context)
                                  "/system_info/config", body_buffer, strlen(body_buffer),
                                  aknano_context->settings);
 
-        time_t reference_time = aknano_cli_get_current_epoch(aknano_settings->boot_up_epoch);
+        time_t reference_time = aknano_cli_get_current_epoch();
 // #define TUF_FORCE_DATE_IN_FUTURE 1
 #ifdef TUF_FORCE_DATE_IN_FUTURE
         LogInfo((ANSI_COLOR_RED "Forcing TUF reference date to be 1 year from now" ANSI_COLOR_RESET));

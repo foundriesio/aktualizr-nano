@@ -31,7 +31,7 @@ static char bodyBuffer[500];
 
 static void get_time_str(time_t boot_up_epoch, char *output)
 {
-    time_t current_epoch_sec = aknano_cli_get_current_epoch(boot_up_epoch);
+    time_t current_epoch_sec = aknano_cli_get_current_epoch();
     struct tm *tm = gmtime(&current_epoch_sec);
 
     sprintf(output, "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ",
