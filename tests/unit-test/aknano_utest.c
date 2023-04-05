@@ -78,7 +78,7 @@ void test_aknano_targets_manifest( void )
     ret = parse_targets_metadata(JSON_EMPTY, strlen(JSON_EMPTY), &aknano_context);
     TEST_ASSERT_EQUAL(-EINVAL, ret);
 
-    aknano_settings.hwid = "MIMXRT1060-EVK";
+    aknano_settings.hwid = TEST_BOARD_NAME;
     aknano_settings.tag[0] = 0;
     memset(&aknano_context.selected_target, 0, sizeof(aknano_context.selected_target));
     ret = parse_targets_metadata(JSON_EMPTY, strlen(JSON_EMPTY), &aknano_context);
@@ -118,7 +118,7 @@ void test_aknano_targets_manifest( void )
     ret = parse_targets_metadata(JSON_VALID_ONE_TARGET, strlen(JSON_VALID_ONE_TARGET), &aknano_context);
     TEST_ASSERT_EQUAL(TUF_SUCCESS, ret);
 
-    aknano_settings.hwid = "MIMXRT1060-EVK";
+    aknano_settings.hwid = TEST_BOARD_NAME;
     strcpy(aknano_settings.tag, "devel");
     memset(&aknano_context.selected_target, 0, sizeof(aknano_context.selected_target));
     ret = parse_targets_metadata(JSON_VALID_TWO_TARGETS, strlen(JSON_VALID_TWO_TARGETS), &aknano_context);
@@ -133,9 +133,9 @@ void test_aknano_targets_manifest( void )
     TEST_ASSERT_EQUAL(TUF_SUCCESS, ret);
 }
 
-#define TEST_INITIAL_EPOCH 1680120313
+#define TEST_DEFAULT_INITIAL_EPOCH 1680120313
 
-static time_t test_current_epoch = TEST_INITIAL_EPOCH;
+static time_t test_current_epoch = TEST_DEFAULT_INITIAL_EPOCH;
 
 static void stub_aknano_delay(uint32_t ms, int num_calls)
 {
@@ -147,26 +147,13 @@ static time_t stub_aknano_cli_get_current_epoch(int num_calls)
     return test_current_epoch;
 }
 
-unsigned char *gen_rdm_bytestream (size_t num_bytes)
-{
-  unsigned char *stream = malloc (num_bytes);
-  size_t i;
-
-  for (i = 0; i < num_bytes; i++)
-  {
-    stream[i] = rand ();
-  }
-
-  return stream;
-}
-
 #define TEST_RANDOM_SEED 66736278
-static bool random_seed_initialized = false;
+static bool test_random_seed_initialized = false;
 static status_t stub_aknano_cli_gen_random_bytes(char *output, size_t size, int num_calls)
 {
-    if (!random_seed_initialized) {
+    if (!test_random_seed_initialized) {
         srand(TEST_RANDOM_SEED);
-        random_seed_initialized = true;
+        test_random_seed_initialized = true;
     }
 
     for (size_t i = 0; i < size; i++) {
@@ -174,7 +161,6 @@ static status_t stub_aknano_cli_gen_random_bytes(char *output, size_t size, int 
     }
     return 0;
 }
-
 
 const char *stub_aknano_get_board_name(int num_call)
 {
@@ -210,7 +196,6 @@ status_t stub_aknano_write_data_to_storage(int offset, const void *data, size_t 
 {
     return stub_aknano_write_data_to_flash(AKNANO_STORAGE_FLASH_OFFSET + offset, data, data_len, 0);
 }
-
 
 void stub_aknano_update_settings_in_flash(struct aknano_settings *aknano_settings)
 {
@@ -333,13 +318,6 @@ BaseType_t stub_aknano_mtls_send_http_request(
     return 1;
 }
 
-// void stub_aknano_mtls_send_http_request(struct aknano_network_context *network_context, int num_calls)
-// {
-//     TEST_ASSERT(network_context != NULL);
-
-//     TEST_ASSERT(network_context->is_connected);
-//     network_context->is_connected = false;
-// }
 int stub_aknano_init_network_context(struct aknano_network_context *network_context, int num_calls)
 {
     memset(network_context, 0, sizeof(*network_context));
@@ -385,8 +363,6 @@ void static initialize_test_flash()
 
 void test_aknano_api()
 {
-    initialize_test_flash();
-
     static struct aknano_settings aknano_settings;
     time_t startup_epoch;
     const time_t max_offline_time_on_temp_image = 180;
@@ -525,8 +501,6 @@ void test_aknano_default_loop()
 {
     uint32_t remaining_iterations = 1;
 
-    initialize_test_flash();
-
     /* For initialization */
     const int image_position = 1;
     uint32_t version = AKANANO_TEST_VERSION;
@@ -564,3 +538,17 @@ void test_aknano_default_loop()
 
 /* Dummy implementation for now. Settings API will be improved */
 void UpdateSettingValue(const char* name, int value) {}
+
+
+/* Called before each test method. */
+void setUp()
+{
+    test_current_epoch = TEST_DEFAULT_INITIAL_EPOCH;
+    test_random_seed_initialized = false;
+    initialize_test_flash();
+}
+
+/* Called after each test method. */
+void tearDown()
+{
+}
