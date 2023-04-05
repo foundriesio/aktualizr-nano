@@ -186,14 +186,14 @@ uint32_t aknano_get_target_slot_address(uint8_t current_image_position)
 
 bool aknano_is_current_image_permanent()
 {
-    uint32_t currentStatus;
+    uint32_t current_status;
     bool is_image_permanent = false;
 
     aknano_delay(200);
-    if (bl_get_image_state(&currentStatus) == kStatus_Success) {
-        if (currentStatus == kSwapType_Testing) {
+    if (bl_get_image_state(&current_status) == kStatus_Success) {
+        if (current_status == kSwapType_Testing) {
             LogInfo((ANSI_COLOR_GREEN "Current image state is Testing" ANSI_COLOR_RESET));
-        } else if (currentStatus == kSwapType_ReadyForTest) {
+        } else if (current_status == kSwapType_ReadyForTest) {
             LogInfo((ANSI_COLOR_GREEN "Current image state is ReadyForTest" ANSI_COLOR_RESET));
         } else {
             LogInfo((ANSI_COLOR_GREEN "Current image state is Permanent" ANSI_COLOR_RESET));
@@ -202,6 +202,7 @@ bool aknano_is_current_image_permanent()
     } else {
         LogWarn((ANSI_COLOR_RED "Error getting image state"));
     }
+    return is_image_permanent;
 }
 
 void aknano_get_current_version(uint32_t *running_version, int image_position)
