@@ -144,6 +144,11 @@ static BaseType_t aknano_download_image(
                 break;
             }
 
+            if (network_context->reply_body_len == 0) {
+                LogWarn(("Got empty reply. Stopping download"));
+                break;
+            }
+
             stored += network_context->reply_body_len;
 
             /* We increment by the content length because the server may not
