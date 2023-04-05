@@ -481,8 +481,10 @@ void aknano_sample_loop(uint32_t *remaining_iterations)
                 is_reboot_required = aknano_install_selected_target(&aknano_context);
 
             /* An update was performed, reboot board */
-            if (is_reboot_required)
+            if (is_reboot_required) {
                 aknano_reboot_command();
+                return;
+            }
         } else {
             LogInfo(("* Check-in failed with error %d", checkin_result));
         }
@@ -493,6 +495,7 @@ void aknano_sample_loop(uint32_t *remaining_iterations)
             LogWarn(("* Check-in failed for too long while running a temporary image. Forcing a reboot to initiate rollback process"));
             aknano_delay(2000);
             aknano_reboot_command();
+            return;
         }
 
         sleep_time = aknano_get_setting(&aknano_context, "polling_interval");
