@@ -13,8 +13,7 @@ Building and running built-in tests
 -----------------------------------
 Inside the cloned directory:
 ```
-git submodule init
-git submodule update
+git submodule update --init --recursive
 cd tests
 cmake -B build
 cd build
