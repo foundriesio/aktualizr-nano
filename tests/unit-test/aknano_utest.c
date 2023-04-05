@@ -136,6 +136,9 @@ void test_aknano_targets_manifest( void )
 /* March 29, 2023 8:05:13 PM */
 #define TEST_DEFAULT_INITIAL_EPOCH_MS 1680120313000UL
 
+/* Add 1 month, timestamp.json should be expired */
+#define TEST_DEFAULT_INITIAL_EPOCH_MS_EXPIRED TEST_DEFAULT_INITIAL_EPOCH_MS + (1000UL * 60 * 60 * 24 * 30)
+
 static uint64_t test_current_epoch_ms = TEST_DEFAULT_INITIAL_EPOCH_MS;
 
 static void stub_aknano_delay(uint32_t ms, int num_calls)
@@ -233,6 +236,17 @@ void stub_aknano_update_settings_in_flash(struct aknano_settings *aknano_setting
     stub_aknano_write_data_to_storage(AKNANO_FLASH_OFF_STATE_BASE, flashPageBuffer, sizeof(flashPageBuffer), 0);
 }
 
+enum test_type_aknano {
+    AKTEST_SUCCESS,
+    AKTEST_SUCCESS_ROLLED_BACK, /* TODO */
+    AKTEST_ERROR_TUF_METADATA_TOO_BIG,
+    AKTEST_ERROR_TUF_METADATA_EXPIRED,
+    AKTEST_ERROR_TUF_METADATA_DOWNLOAD_FAILED,
+    AKTEST_ERROR_INCOMPLETE_DOWNLOAD,
+    AKTEST_ERROR_CORRUPTED_DOWNLOAD,
+    AKTEST_ERROR_FAIL_CHECKIN_UNTIL_REBOOT,
+} test_ongoing_test_type;
+
 BaseType_t stub_aknano_mtls_connect(struct aknano_network_context* network_context, const char* hostname, size_t hostname_len, uint16_t port, const char* server_root_ca, size_t server_root_ca_len, int stub_num_calls)
 {
     TEST_ASSERT(network_context != NULL);
@@ -241,6 +255,11 @@ BaseType_t stub_aknano_mtls_connect(struct aknano_network_context* network_conte
     TEST_ASSERT(port > 0);
 
     TEST_ASSERT(!network_context->is_connected);
+
+    if (test_ongoing_test_type == AKTEST_ERROR_FAIL_CHECKIN_UNTIL_REBOOT) {
+        /* For testing repeated checking failures, emulate a connection failure on every attempt */
+        return 0;
+    }
 
     network_context->is_connected = true;
     return 1;
@@ -286,23 +305,39 @@ BaseType_t stub_aknano_mtls_send_http_request(
         } else if (strcmp(pcPath, "/repo/timestamp.json") == 0) {
             network_context->reply_body = json_timestamp;
             network_context->reply_body_len = strlen(network_context->reply_body);
+            if (test_ongoing_test_type == AKTEST_ERROR_TUF_METADATA_DOWNLOAD_FAILED) {
+                /* Emulate an error on the network operation */
+                return 0;
+            }
         } else if (strcmp(pcPath, "/repo/snapshot.json") == 0) {
             network_context->reply_body = json_snapshot;
             network_context->reply_body_len = strlen(network_context->reply_body);
         } else if (strcmp(pcPath, "/repo/targets.json") == 0) {
             network_context->reply_body = json_targets;
             network_context->reply_body_len = strlen(network_context->reply_body);
+            if (test_ongoing_test_type == AKTEST_ERROR_TUF_METADATA_TOO_BIG) {
+                /* For testing handling of "too big" metadata, just send the test fw binary instead */
+                network_context->reply_body = random_fw_4000_signed;
+                network_context->reply_body_len = random_fw_4000_signed_len;
+            }
         } else if (strcmp(pcPath, "/mcu/files/64/12338049eed6bf15a9a8a5fe8b1b2773a9a4306a7610af30529ea16157a8a8.bin") == 0) {
             TEST_ASSERT(request_range_start >= 0);
             TEST_ASSERT(request_range_end > 0);
+            size_t file_len = random_fw_4000_signed_len;
+            if (test_ongoing_test_type == AKTEST_ERROR_INCOMPLETE_DOWNLOAD)
+                file_len = random_fw_4000_signed_len - 100; /* do not send last 100 bytes*/
             network_context->reply_body = random_fw_4000_signed + request_range_start;
-            if (request_range_end < random_fw_4000_signed_len) {
+            if (request_range_end < file_len) {
                 network_context->reply_body_len = request_range_end - request_range_start + 1;
                 network_context->reply_http_code = 206;
             } else {
-                network_context->reply_body_len = random_fw_4000_signed_len - request_range_start + 1;
+                network_context->reply_body_len = file_len - request_range_start + 1;
                 network_context->reply_http_code = 206;
             }
+            /* Shift first block by 1 byte to corrupt final donwloaded image, without needing an extra buffer */
+            if (test_ongoing_test_type == AKTEST_ERROR_CORRUPTED_DOWNLOAD && request_range_start == 0)
+                network_context->reply_body = random_fw_4000_signed + 1;
+
         } else {
             network_context->reply_body = "";
         }
@@ -330,7 +365,8 @@ void stub_aknano_mtls_disconnect(struct aknano_network_context *network_context,
 {
     TEST_ASSERT(network_context != NULL);
 
-    TEST_ASSERT(network_context->is_connected);
+    if (test_ongoing_test_type != AKTEST_ERROR_FAIL_CHECKIN_UNTIL_REBOOT)
+        TEST_ASSERT(network_context->is_connected);
     network_context->is_connected = false;
 }
 
@@ -360,14 +396,16 @@ void static initialize_test_flash()
 }
 
 
-// void aknano_get_current_image_state
-
-void test_aknano_api()
+void internal_test_aknano_api()
 {
     static struct aknano_settings aknano_settings;
     time_t startup_epoch;
     const time_t max_offline_time_on_temp_image = 180;
     bool any_checkin_ok = false;
+
+    test_current_epoch_ms = TEST_DEFAULT_INITIAL_EPOCH_MS;
+    if (test_ongoing_test_type == AKTEST_ERROR_TUF_METADATA_EXPIRED)
+        test_current_epoch_ms = TEST_DEFAULT_INITIAL_EPOCH_MS_EXPIRED;
 
     /* Initialization needs to be called once */
     const int image_position = 1;
@@ -377,7 +415,10 @@ void test_aknano_api()
     aknano_get_current_version_IgnoreArg_running_version();
     aknano_get_current_version_ReturnThruPtr_running_version(&version);
     aknano_read_flash_storage_StubWithCallback(stub_aknano_read_flash_storage);
-    aknano_is_current_image_permanent_IgnoreAndReturn(true);
+        if (test_ongoing_test_type == AKTEST_ERROR_FAIL_CHECKIN_UNTIL_REBOOT)
+        aknano_is_current_image_permanent_IgnoreAndReturn(false);
+    else
+        aknano_is_current_image_permanent_IgnoreAndReturn(true);
     aknano_get_board_name_StubWithCallback(stub_aknano_get_board_name);
     aknano_delay_StubWithCallback(stub_aknano_delay);
     aknano_cli_gen_random_bytes_StubWithCallback(stub_aknano_cli_gen_random_bytes);
@@ -415,13 +456,44 @@ void test_aknano_api()
         aknano_mtls_disconnect_StubWithCallback(stub_aknano_mtls_disconnect);
         aknano_mtls_send_http_request_StubWithCallback(stub_aknano_mtls_send_http_request);
         aknano_write_data_to_storage_StubWithCallback(stub_aknano_write_data_to_storage);
-        aknano_set_image_confirmed_ExpectAnyArgs();
+        if (test_ongoing_test_type != AKTEST_ERROR_TUF_METADATA_EXPIRED
+            && test_ongoing_test_type != AKTEST_ERROR_TUF_METADATA_TOO_BIG
+            && test_ongoing_test_type != AKTEST_ERROR_TUF_METADATA_DOWNLOAD_FAILED
+            && test_ongoing_test_type != AKTEST_ERROR_FAIL_CHECKIN_UNTIL_REBOOT) {
+            aknano_set_image_confirmed_ExpectAnyArgs();
+        }
 
         aknano_get_ipv4_and_mac_StubWithCallback(stub_aknano_get_ipv4_and_mac);
         // set_ipv4_and_mac_mock();
         checkin_result = aknano_checkin(&aknano_context);
-        TEST_ASSERT(checkin_result == 0);
-        TEST_ASSERT_EQUAL_STRING(TEST_TAG, aknano_context.settings->tag);
+
+        LogInfo(("checkin_result=%d", checkin_result));
+
+        if (test_ongoing_test_type == AKTEST_ERROR_TUF_METADATA_EXPIRED) {
+            /* Error test: expired tuf metadata */
+            TEST_ASSERT(checkin_result == TUF_ERROR_EXPIRED_METADATA);
+            return;
+        }
+
+        if (test_ongoing_test_type == AKTEST_ERROR_TUF_METADATA_TOO_BIG) {
+            /* Error test: expired tuf metadata */
+            TEST_ASSERT(checkin_result == TUF_ERROR_DATA_EXCEEDS_BUFFER_SIZE);
+            return;
+        }
+
+        if (test_ongoing_test_type == AKTEST_ERROR_TUF_METADATA_DOWNLOAD_FAILED) {
+            /* Error test: download operation failed */
+            TEST_ASSERT(checkin_result == -1);
+            return;
+        }
+
+        if (test_ongoing_test_type == AKTEST_ERROR_FAIL_CHECKIN_UNTIL_REBOOT) {
+            TEST_ASSERT(checkin_result == -10);
+            aknano_context.settings->is_image_permanent = false;
+        } else {
+            TEST_ASSERT(checkin_result == 0);
+            TEST_ASSERT_EQUAL_STRING(TEST_TAG, aknano_context.settings->tag);
+        }
 
         if (checkin_result == 0) {
             /* Check-in successful. Check selected target */
@@ -467,16 +539,24 @@ void test_aknano_api()
                 aknano_get_target_slot_address_StubWithCallback(stub_aknano_get_target_slot_address);
                 aknano_write_data_to_flash_StubWithCallback(stub_aknano_write_data_to_flash);
                 aknano_update_settings_in_flash_StubWithCallback(stub_aknano_update_settings_in_flash);
-                aknano_verify_image_IgnoreAndReturn(true);
-                aknano_set_image_ready_for_test_IgnoreAndReturn(0);
+                if (test_ongoing_test_type == AKTEST_SUCCESS || test_ongoing_test_type == AKTEST_SUCCESS_ROLLED_BACK) {
+                    aknano_verify_image_IgnoreAndReturn(true);
+                    aknano_set_image_ready_for_test_IgnoreAndReturn(0);
+                }
                 is_reboot_required = aknano_install_selected_target(&aknano_context);
+                if (test_ongoing_test_type == AKTEST_ERROR_INCOMPLETE_DOWNLOAD || test_ongoing_test_type == AKTEST_ERROR_CORRUPTED_DOWNLOAD) {
+                    TEST_ASSERT(is_reboot_required == false);
+                    return;
+                }
             }
 
             TEST_ASSERT(is_reboot_required);
-        break;
             /* An update was performed, reboot board */
-            if (is_reboot_required)
+            if (is_reboot_required) {
+                aknano_reboot_command_Expect();
                 aknano_reboot_command();
+                break;
+            }
         } else {
             LogInfo(("* Check-in failed with error %d", checkin_result));
         }
@@ -486,21 +566,66 @@ void test_aknano_api()
             aknano_cli_get_current_epoch() > startup_epoch + max_offline_time_on_temp_image) {
             LogWarn(("* Check-in failed for too long while running a temporary image. Forcing a reboot to initiate rollback process"));
             aknano_delay(2000);
+            aknano_reboot_command_Expect();
             aknano_reboot_command();
+            break;
         }
 
         sleep_time = aknano_get_setting(&aknano_context, "polling_interval");
         sleep_time = limit_sleep_time_range(sleep_time);
         LogInfo(("Sleeping %d seconds. any_checkin_ok=%d temp_image=%d\n\n",
                  sleep_time, any_checkin_ok, aknano_is_temp_image(&aknano_settings)));
-        break;
         aknano_delay(sleep_time * 1000);
+        if (test_ongoing_test_type != AKTEST_ERROR_FAIL_CHECKIN_UNTIL_REBOOT)
+            break;
     }
 }
 
-void test_aknano_default_loop()
+void test_aknano_api_ok()
 {
-    uint32_t remaining_iterations = 1;
+    test_ongoing_test_type = AKTEST_SUCCESS;
+    internal_test_aknano_api();
+}
+
+void test_aknano_api_expired()
+{
+    test_ongoing_test_type = AKTEST_ERROR_TUF_METADATA_EXPIRED;
+    internal_test_aknano_api();
+}
+
+void test_aknano_tuf_metadata_too_big()
+{
+    test_ongoing_test_type = AKTEST_ERROR_TUF_METADATA_TOO_BIG;
+    internal_test_aknano_api();
+}
+
+void test_aknano_tuf_metadata_download_failed()
+{
+    test_ongoing_test_type = AKTEST_ERROR_TUF_METADATA_DOWNLOAD_FAILED;
+    internal_test_aknano_api();
+}
+
+void test_aknano_incomplete_firmware_download()
+{
+    test_ongoing_test_type = AKTEST_ERROR_INCOMPLETE_DOWNLOAD;
+    internal_test_aknano_api();
+}
+
+void test_aknano_corrupted_firmware_download()
+{
+    test_ongoing_test_type = AKTEST_ERROR_CORRUPTED_DOWNLOAD;
+    internal_test_aknano_api();
+}
+
+void test_aknano_error_fail_checkin_until_reboot()
+{
+    test_ongoing_test_type = AKTEST_ERROR_FAIL_CHECKIN_UNTIL_REBOOT;
+    internal_test_aknano_api();
+}
+
+void internal_test_aknano_default_loop()
+{
+    uint32_t remaining_iterations = 2;
 
     /* For initialization */
     const int image_position = 1;
@@ -510,7 +635,10 @@ void test_aknano_default_loop()
     aknano_get_current_version_IgnoreArg_running_version();
     aknano_get_current_version_ReturnThruPtr_running_version(&version);
     aknano_read_flash_storage_StubWithCallback(stub_aknano_read_flash_storage);
-    aknano_is_current_image_permanent_IgnoreAndReturn(true);
+    if (test_ongoing_test_type == AKTEST_ERROR_FAIL_CHECKIN_UNTIL_REBOOT)
+        aknano_is_current_image_permanent_IgnoreAndReturn(false);
+    else
+        aknano_is_current_image_permanent_IgnoreAndReturn(true);
     aknano_get_board_name_StubWithCallback(stub_aknano_get_board_name);
     aknano_delay_StubWithCallback(stub_aknano_delay);
     aknano_cli_gen_random_bytes_StubWithCallback(stub_aknano_cli_gen_random_bytes);
@@ -522,20 +650,35 @@ void test_aknano_default_loop()
     aknano_mtls_disconnect_StubWithCallback(stub_aknano_mtls_disconnect);
     aknano_mtls_send_http_request_StubWithCallback(stub_aknano_mtls_send_http_request);
     aknano_write_data_to_storage_StubWithCallback(stub_aknano_write_data_to_storage);
-    aknano_set_image_confirmed_ExpectAnyArgs();
     aknano_get_ipv4_and_mac_StubWithCallback(stub_aknano_get_ipv4_and_mac);
 
     /* Per update */
-    aknano_get_target_slot_address_StubWithCallback(stub_aknano_get_target_slot_address);
-    aknano_write_data_to_flash_StubWithCallback(stub_aknano_write_data_to_flash);
-    aknano_update_settings_in_flash_StubWithCallback(stub_aknano_update_settings_in_flash);
-    aknano_verify_image_IgnoreAndReturn(true);
-    aknano_set_image_ready_for_test_IgnoreAndReturn(0);
-    aknano_reboot_command_Ignore();
+    if (test_ongoing_test_type != AKTEST_ERROR_FAIL_CHECKIN_UNTIL_REBOOT) {
+        aknano_set_image_confirmed_ExpectAnyArgs();
+        aknano_get_target_slot_address_StubWithCallback(stub_aknano_get_target_slot_address);
+        aknano_write_data_to_flash_StubWithCallback(stub_aknano_write_data_to_flash);
+        aknano_update_settings_in_flash_StubWithCallback(stub_aknano_update_settings_in_flash);
+        aknano_verify_image_IgnoreAndReturn(true);
+        aknano_set_image_ready_for_test_IgnoreAndReturn(0);
+    }
+    aknano_reboot_command_Expect();
 
+    if (test_ongoing_test_type == AKTEST_ERROR_FAIL_CHECKIN_UNTIL_REBOOT) {
+        remaining_iterations = 1000000;
+    }
     aknano_sample_loop(&remaining_iterations);
 }
 
+void test_aknano_default_loop()
+{
+    internal_test_aknano_default_loop();
+}
+
+void test_aknano_default_loop_watchdog()
+{
+    test_ongoing_test_type = AKTEST_ERROR_FAIL_CHECKIN_UNTIL_REBOOT;
+    internal_test_aknano_default_loop();
+}
 
 /* Dummy implementation for now. Settings API will be improved */
 void UpdateSettingValue(const char* name, int value) {}
@@ -544,6 +687,7 @@ void UpdateSettingValue(const char* name, int value) {}
 /* Called before each test method. */
 void setUp()
 {
+    test_ongoing_test_type = AKTEST_SUCCESS;
     test_current_epoch_ms = TEST_DEFAULT_INITIAL_EPOCH_MS;
     test_random_seed_initialized = false;
     initialize_test_flash();
