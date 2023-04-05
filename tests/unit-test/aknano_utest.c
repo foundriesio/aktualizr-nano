@@ -1,5 +1,8 @@
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/random.h>
+#include <time.h>
 
 #include "unity.h"
 
@@ -10,6 +13,7 @@
 #include "aknano_targets_manifest.h"
 #include "libtufnano.h"
 
+#include "mock_aknano_client.h"
 #include "mock_aknano_net.h"
 #include "mock_aknano_flash_storage.h"
 #include "mock_aknano_board.h"
@@ -128,6 +132,49 @@ void test_aknano_targets_manifest( void )
     ret = parse_targets_metadata(JSON_NO_SHA256, strlen(JSON_NO_SHA256), &aknano_context);
     TEST_ASSERT_EQUAL(TUF_SUCCESS, ret);
 }
+
+#define TEST_INITIAL_EPOCH 1680120313
+
+static time_t test_current_epoch = TEST_INITIAL_EPOCH;
+
+static void stub_aknano_delay(uint32_t ms, int num_calls)
+{
+    test_current_epoch += ms;
+}
+
+static time_t stub_aknano_cli_get_current_epoch(int num_calls)
+{
+    return test_current_epoch;
+}
+
+unsigned char *gen_rdm_bytestream (size_t num_bytes)
+{
+  unsigned char *stream = malloc (num_bytes);
+  size_t i;
+
+  for (i = 0; i < num_bytes; i++)
+  {
+    stream[i] = rand ();
+  }
+
+  return stream;
+}
+
+#define TEST_RANDOM_SEED 66736278
+static bool random_seed_initialized = false;
+static status_t stub_aknano_cli_gen_random_bytes(char *output, size_t size, int num_calls)
+{
+    if (!random_seed_initialized) {
+        srand(TEST_RANDOM_SEED);
+        random_seed_initialized = true;
+    }
+
+    for (size_t i = 0; i < size; i++) {
+        output[i] = rand() & 0xFF;
+    }
+    return 0;
+}
+
 
 const char *stub_aknano_get_board_name(int num_call)
 {
@@ -341,7 +388,7 @@ void test_aknano_api()
     initialize_test_flash();
 
     static struct aknano_settings aknano_settings;
-    time_t startup_epoch = get_current_epoch();
+    time_t startup_epoch;
     const time_t max_offline_time_on_temp_image = 180;
     bool any_checkin_ok = false;
 
@@ -355,7 +402,11 @@ void test_aknano_api()
     aknano_read_flash_storage_StubWithCallback(stub_aknano_read_flash_storage);
     aknano_is_current_image_permanent_IgnoreAndReturn(true);
     aknano_get_board_name_StubWithCallback(stub_aknano_get_board_name);
-    aknano_delay_Ignore();
+    aknano_delay_StubWithCallback(stub_aknano_delay);
+    aknano_cli_gen_random_bytes_StubWithCallback(stub_aknano_cli_gen_random_bytes);
+    aknano_cli_get_current_epoch_StubWithCallback(stub_aknano_cli_get_current_epoch);
+
+    startup_epoch = aknano_cli_get_current_epoch();
     // aknano_read_flash_storage()
     aknano_init(&aknano_settings);
     /* Make sure we get the right tag from the config file */
@@ -455,7 +506,7 @@ void test_aknano_api()
 
         /* If the checkin operation fails for too long after an update, the image may be bad */
         if (!any_checkin_ok && aknano_is_temp_image(&aknano_settings) &&
-            get_current_epoch() > startup_epoch + max_offline_time_on_temp_image) {
+            aknano_cli_get_current_epoch() > startup_epoch + max_offline_time_on_temp_image) {
             LogWarn(("* Check-in failed for too long while running a temporary image. Forcing a reboot to initiate rollback process"));
             aknano_delay(2000);
             aknano_reboot_command();
@@ -486,7 +537,9 @@ void test_aknano_default_loop()
     aknano_read_flash_storage_StubWithCallback(stub_aknano_read_flash_storage);
     aknano_is_current_image_permanent_IgnoreAndReturn(true);
     aknano_get_board_name_StubWithCallback(stub_aknano_get_board_name);
-    aknano_delay_Ignore();
+    aknano_delay_StubWithCallback(stub_aknano_delay);
+    aknano_cli_gen_random_bytes_StubWithCallback(stub_aknano_cli_gen_random_bytes);
+    aknano_cli_get_current_epoch_StubWithCallback(stub_aknano_cli_get_current_epoch);
 
     /* Per iteration */
     init_network_context_StubWithCallback(stub_aknano_init_network_context);

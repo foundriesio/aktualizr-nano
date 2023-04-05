@@ -230,7 +230,7 @@ int aknano_checkin(struct aknano_context *aknano_context)
                                  "/system_info/config", body_buffer, strlen(body_buffer),
                                  aknano_context->settings);
 
-        time_t reference_time = get_current_epoch(aknano_settings->boot_up_epoch);
+        time_t reference_time = aknano_cli_get_current_epoch(aknano_settings->boot_up_epoch);
 // #define TUF_FORCE_DATE_IN_FUTURE 1
 #ifdef TUF_FORCE_DATE_IN_FUTURE
         LogInfo((ANSI_COLOR_RED "Forcing TUF reference date to be 1 year from now" ANSI_COLOR_RESET));
@@ -298,12 +298,12 @@ time_t aknano_get_next_rollback_retry_time(struct aknano_settings *aknano_settin
                                       AKNANO_ROLLBACK_RETRY_MAX_DELAY,
                                       AKNANO_MAX_ROLLED_BACK_VERSION_RETRIES);
 
-    aknano_gen_random_bytes((char *)&random_int, sizeof(random_int));
+    aknano_cli_gen_random_bytes((char *)&random_int, sizeof(random_int));
     for (int i = 0; i < aknano_settings->rollback_retry_count; i++)
         BackoffAlgorithm_GetNextBackoff(&retry_params, random_int, &next_retry_backoff);
 
     LogInfo(("rollback_retry set to %u minutes", next_retry_backoff));
-    return get_current_epoch() + (next_retry_backoff * 60);
+    return aknano_cli_get_current_epoch() + (next_retry_backoff * 60);
 }
 
 bool aknano_install_selected_target(struct aknano_context *aknano_context)
@@ -378,7 +378,7 @@ bool aknano_should_retry_rollback(struct aknano_context *aknano_context)
     if (aknano_context->settings->rollback_retry_count >= AKNANO_MAX_ROLLED_BACK_VERSION_RETRIES)
         return false;
 
-    if (aknano_context->settings->rollback_next_retry_time > get_current_epoch())
+    if (aknano_context->settings->rollback_next_retry_time > aknano_cli_get_current_epoch())
         return false;
 
     return true;
@@ -416,7 +416,7 @@ int limit_sleep_time_range(int sleep_time)
 void aknano_sample_loop(uint32_t *remaining_iterations)
 {
     static struct aknano_settings aknano_settings;
-    time_t startup_epoch = get_current_epoch();
+    time_t startup_epoch = aknano_cli_get_current_epoch();
     const time_t max_offline_time_on_temp_image = 180;
     bool any_checkin_ok = false;
 
@@ -489,7 +489,7 @@ void aknano_sample_loop(uint32_t *remaining_iterations)
 
         /* If the checkin operation fails for too long after an update, the image may be bad */
         if (!any_checkin_ok && aknano_is_temp_image(&aknano_settings) &&
-            get_current_epoch() > startup_epoch + max_offline_time_on_temp_image) {
+            aknano_cli_get_current_epoch() > startup_epoch + max_offline_time_on_temp_image) {
             LogWarn(("* Check-in failed for too long while running a temporary image. Forcing a reboot to initiate rollback process"));
             aknano_delay(2000);
             aknano_reboot_command();
