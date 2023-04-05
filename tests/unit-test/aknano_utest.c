@@ -133,18 +133,19 @@ void test_aknano_targets_manifest( void )
     TEST_ASSERT_EQUAL(TUF_SUCCESS, ret);
 }
 
-#define TEST_DEFAULT_INITIAL_EPOCH 1680120313
+/* March 29, 2023 8:05:13 PM */
+#define TEST_DEFAULT_INITIAL_EPOCH_MS 1680120313000UL
 
-static time_t test_current_epoch = TEST_DEFAULT_INITIAL_EPOCH;
+static uint64_t test_current_epoch_ms = TEST_DEFAULT_INITIAL_EPOCH_MS;
 
 static void stub_aknano_delay(uint32_t ms, int num_calls)
 {
-    test_current_epoch += ms;
+    test_current_epoch_ms += ms;
 }
 
 static time_t stub_aknano_cli_get_current_epoch(int num_calls)
 {
-    return test_current_epoch;
+    return test_current_epoch_ms / 1000;
 }
 
 #define TEST_RANDOM_SEED 66736278
@@ -543,7 +544,7 @@ void UpdateSettingValue(const char* name, int value) {}
 /* Called before each test method. */
 void setUp()
 {
-    test_current_epoch = TEST_DEFAULT_INITIAL_EPOCH;
+    test_current_epoch_ms = TEST_DEFAULT_INITIAL_EPOCH_MS;
     test_random_seed_initialized = false;
     initialize_test_flash();
 }
