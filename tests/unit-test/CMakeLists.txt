@@ -9,6 +9,7 @@ set(project_name "aknano")
 
 # list the files to mock here
     list(APPEND mock_list
+        ${MODULE_ROOT_DIR}/src/aknano_client.h
         ${MODULE_ROOT_DIR}/src/aknano_net.h
         ${MODULE_ROOT_DIR}/src/aknano_flash_storage.h
         ${MODULE_ROOT_DIR}/src/aknano_board.h

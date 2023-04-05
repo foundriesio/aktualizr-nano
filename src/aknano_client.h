@@ -9,9 +9,11 @@
 #define __AKNANO_CLIENT_H__
 #include "aknano_public_api.h"
 
-int initStorage();
-int initTime();
-time_t get_current_epoch();
-status_t aknano_gen_random_bytes(char *output, size_t size);
+/*
+ * Functions that should be implemented by the client application
+ */
+
+time_t aknano_cli_get_current_epoch();
+status_t aknano_cli_gen_random_bytes(char *output, size_t size);
 
 #endif

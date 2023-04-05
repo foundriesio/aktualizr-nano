@@ -16,7 +16,6 @@ set( AKNANO_SOURCES
      ${CMAKE_CURRENT_LIST_DIR}/src/aknano_image_download.c
      ${CMAKE_CURRENT_LIST_DIR}/src/aknano_tuf_client.c
      ${CMAKE_CURRENT_LIST_DIR}/src/aknano.c
-     ${CMAKE_CURRENT_LIST_DIR}/tests/aknano_test_client/aknano_client.c
 
      ${BACKOFF_ALGORITHM_SOURCES}
      ${CMAKE_CURRENT_LIST_DIR}/tests/unit-test/inih/ini.c

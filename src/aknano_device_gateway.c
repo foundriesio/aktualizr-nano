@@ -31,7 +31,7 @@ static char bodyBuffer[500];
 
 static void get_time_str(time_t boot_up_epoch, char *output)
 {
-    time_t current_epoch_sec = get_current_epoch(boot_up_epoch);
+    time_t current_epoch_sec = aknano_cli_get_current_epoch(boot_up_epoch);
     struct tm *tm = gmtime(&current_epoch_sec);
 
     sprintf(output, "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ",
@@ -74,7 +74,7 @@ int aknano_gen_serial_and_uuid(char *uuid_string, char *serial_string)
 {
     char serial_bytes[16];
 
-    aknano_gen_random_bytes(serial_bytes, sizeof(serial_bytes));
+    aknano_cli_gen_random_bytes(serial_bytes, sizeof(serial_bytes));
     btox(serial_string, serial_bytes, sizeof(serial_bytes) * 2);
     serial_string_to_uuid_string(serial_string, uuid_string);
     uuid_string[36] = '\0';
