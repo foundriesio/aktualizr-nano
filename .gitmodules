@@ -1,21 +1,21 @@
-[submodule "tests/unit-test/mbedtls"]
-	path = tests/unit-test/mbedtls
+[submodule "test/unit-test/mbedtls"]
+	path = test/unit-test/mbedtls
 	url = https://github.com/Mbed-TLS/mbedtls.git
-[submodule "tests/unit-test/coreJSON"]
-	path = tests/unit-test/coreJSON
+[submodule "test/unit-test/coreJSON"]
+	path = test/unit-test/coreJSON
 	url = https://github.com/FreeRTOS/coreJSON.git
-[submodule "tests/unit-test/Unity"]
-	path = tests/unit-test/Unity
+[submodule "test/unit-test/Unity"]
+	path = test/unit-test/Unity
 	url = https://github.com/ThrowTheSwitch/Unity.git
-[submodule "tests/unit-test/libtufnano"]
-	path = tests/unit-test/libtufnano
+[submodule "test/unit-test/libtufnano"]
+	path = test/unit-test/libtufnano
 	url = https://github.com/foundriesio/libtufnano.git
-[submodule "tests/unit-test/backoffAlgorithm"]
-	path = tests/unit-test/backoffAlgorithm
+[submodule "test/unit-test/backoffAlgorithm"]
+	path = test/unit-test/backoffAlgorithm
 	url = https://github.com/FreeRTOS/backoffAlgorithm.git
-[submodule "tests/unit-test/inih"]
-	path = tests/unit-test/inih
+[submodule "test/unit-test/inih"]
+	path = test/unit-test/inih
 	url = https://github.com/benhoyt/inih.git
-[submodule "tests/unit-test/CMock"]
-	path = tests/unit-test/CMock
+[submodule "test/unit-test/CMock"]
+	path = test/unit-test/CMock
 	url = https://github.com/ThrowTheSwitch/CMock.git

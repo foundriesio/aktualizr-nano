@@ -17,8 +17,8 @@ set(project_name "aknano")
     )
 # list the directories your mocks need
     list(APPEND mock_include_list
-        ${MODULE_ROOT_DIR}/tests/unit-test/CMock/src
-        ${MODULE_ROOT_DIR}/tests/unit-test/Unity/src
+        ${MODULE_ROOT_DIR}/test/unit-test/CMock/src
+        ${MODULE_ROOT_DIR}/test/unit-test/Unity/src
         ${MBEDTLS_DIR}/include/
         ${MODULE_ROOT_DIR}/src/
         ${MODULE_ROOT_DIR}/src/platform/linux_tests

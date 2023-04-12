@@ -6,7 +6,7 @@
 # Files specific to the repository such as test runner, platform tests
 # are not added to the variables.
 
-include(${CMAKE_CURRENT_LIST_DIR}/tests/unit-test/backoffAlgorithm/backoffAlgorithmFilePaths.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/test/unit-test/backoffAlgorithm/backoffAlgorithmFilePaths.cmake)
 
 # Aknano library source files.
 set( AKNANO_SOURCES
@@ -18,7 +18,7 @@ set( AKNANO_SOURCES
      ${CMAKE_CURRENT_LIST_DIR}/src/aknano.c
 
      ${BACKOFF_ALGORITHM_SOURCES}
-     ${CMAKE_CURRENT_LIST_DIR}/tests/unit-test/inih/ini.c
+     ${CMAKE_CURRENT_LIST_DIR}/test/unit-test/inih/ini.c
 )
 
 # Aknano library Public Include directories.
@@ -27,5 +27,5 @@ set( AKNANO_INCLUDE_PUBLIC_DIRS
      ${CMAKE_CURRENT_LIST_DIR}/src/provisioning
      ${CMAKE_CURRENT_LIST_DIR}/src/platform/linux_tests
      ${BACKOFF_ALGORITHM_INCLUDE_PUBLIC_DIRS}
-     ${CMAKE_CURRENT_LIST_DIR}/tests/unit-test/inih/
+     ${CMAKE_CURRENT_LIST_DIR}/test/unit-test/inih/
      )

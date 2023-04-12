@@ -15,7 +15,7 @@ Inside the cloned directory:
 ```
 git submodule update --init --recursive
 cd tests
-cmake -B build
+cmake -S test -B build
 cd build
 make
 make test
