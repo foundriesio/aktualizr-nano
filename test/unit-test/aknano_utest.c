@@ -171,8 +171,10 @@ const char *stub_aknano_get_board_name(int num_call)
     return TEST_BOARD_NAME;
 }
 
-void stub_aknano_get_ipv4_and_mac(uint8_t *ip, uint8_t *mac)
+void stub_aknano_get_ipv4_and_mac(uint8_t *ip, uint8_t *mac, int stub_num_calls)
 {
+    (void)stub_num_calls;
+
     uint8_t default_ip[] = { 192, 0, 0, 10};
     uint8_t default_mac[] = { 0x85, 0x81, 0x82, 0x83, 0x84, 0x85};
 
@@ -201,8 +203,10 @@ status_t stub_aknano_write_data_to_storage(int offset, const void *data, size_t 
     return stub_aknano_write_data_to_flash(AKNANO_STORAGE_FLASH_OFFSET + offset, data, data_len, 0);
 }
 
-void stub_aknano_update_settings_in_flash(struct aknano_settings *aknano_settings)
+void stub_aknano_update_settings_in_flash(struct aknano_settings *aknano_settings, int stub_num_calls)
 {
+    (void)stub_num_calls;
+
     char flashPageBuffer[256];
     size_t offset = 0;
 
@@ -280,10 +284,18 @@ BaseType_t stub_aknano_mtls_send_http_request(
                                         const char **header_keys,
                                         const char **header_values,
                                         size_t header_len,
-                                        int request_range_start,
-                                        int request_range_end,
+                                        size_t request_range_start,
+                                        size_t request_range_end,
                                         int stub_num_calls)
 {
+    (void)stub_num_calls;
+    (void)pcBody;
+    (void)xBodyLen;
+    (void)buffer;
+    (void)buffer_len;
+    (void)header_keys;
+    (void)header_values;
+    (void)header_len;
     printf("pcPath=%s method=%s\n", pcPath, pcMethod);
 
     TEST_ASSERT(hostname != NULL);
@@ -336,15 +348,15 @@ BaseType_t stub_aknano_mtls_send_http_request(
             }
             /* Shift first block by 1 byte to corrupt final donwloaded image, without needing an extra buffer */
             if (test_ongoing_test_type == AKTEST_ERROR_CORRUPTED_DOWNLOAD && request_range_start == 0)
-                network_context->reply_body = random_fw_4000_signed + 1;
+                network_context->reply_body = (uint8_t*)random_fw_4000_signed + 1;
 
         } else {
-            network_context->reply_body = "";
+            network_context->reply_body = (uint8_t*)"";
         }
         if (!network_context->reply_http_code)
             network_context->reply_http_code = network_context->reply_body_len == 0? 404 : 200;
     } else {
-        network_context->reply_body = "";
+        network_context->reply_body = (uint8_t*)"";
         network_context->reply_body_len = 0;
         network_context->reply_http_code = 204;
     }
@@ -354,15 +366,19 @@ BaseType_t stub_aknano_mtls_send_http_request(
     return 1;
 }
 
-int stub_aknano_init_network_context(struct aknano_network_context *network_context, int num_calls)
+int stub_aknano_init_network_context(struct aknano_network_context *network_context, int stub_num_calls)
 {
+    (void)stub_num_calls;
+
     memset(network_context, 0, sizeof(*network_context));
-    return;
+    return 0;
 }
 
 
-void stub_aknano_mtls_disconnect(struct aknano_network_context *network_context, int num_calls)
+void stub_aknano_mtls_disconnect(struct aknano_network_context *network_context, int stub_num_calls)
 {
+    (void)stub_num_calls;
+
     TEST_ASSERT(network_context != NULL);
 
     if (test_ongoing_test_type != AKTEST_ERROR_FAIL_CHECKIN_UNTIL_REBOOT)
@@ -371,8 +387,10 @@ void stub_aknano_mtls_disconnect(struct aknano_network_context *network_context,
 }
 
 
-uint32_t stub_aknano_get_target_slot_address(uint8_t current_image_position, int num_calls)
+uint32_t stub_aknano_get_target_slot_address(uint8_t current_image_position, int stub_num_calls)
 {
+    (void)stub_num_calls;
+
     if (current_image_position == 0x01)
         return 0x240000;
     else if (current_image_position == 0x02)
@@ -381,12 +399,12 @@ uint32_t stub_aknano_get_target_slot_address(uint8_t current_image_position, int
         return 0x240000;
 }
 
-void static provision_test_tuf_root()
+static void provision_test_tuf_root()
 {
     strcpy(in_memory_flash + AKNANO_STORAGE_FLASH_OFFSET + AKNANO_FLASH_OFF_TUF_ROOT_PROVISIONING, json_root_12);
 }
 
-void static initialize_test_flash()
+static void initialize_test_flash()
 {
     memset(in_memory_flash, 0xFF, sizeof(in_memory_flash));
     provision_test_tuf_root();
@@ -572,7 +590,7 @@ void internal_test_aknano_api()
         }
 
         sleep_time = aknano_get_setting(&aknano_context, "polling_interval");
-        sleep_time = limit_sleep_time_range(sleep_time);
+        sleep_time = aknano_limit_sleep_time_range(sleep_time);
         LogInfo(("Sleeping %d seconds. any_checkin_ok=%d temp_image=%d\n\n",
                  sleep_time, any_checkin_ok, aknano_is_temp_image(&aknano_settings)));
         aknano_delay(sleep_time * 1000);
@@ -681,7 +699,10 @@ void test_aknano_default_loop_watchdog()
 }
 
 /* Dummy implementation for now. Settings API will be improved */
-void UpdateSettingValue(const char* name, int value) {}
+void UpdateSettingValue(const char* name, int value) {
+    (void)name;
+    (void)value;
+}
 
 
 /* Called before each test method. */

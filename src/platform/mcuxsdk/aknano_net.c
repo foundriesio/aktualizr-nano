@@ -104,8 +104,8 @@ BaseType_t aknano_mtls_send_http_request(
     const char **                  header_keys,
     const char **                  header_values,
     size_t                         header_len,
-    int                            request_range_start,
-    int                            request_range_end
+    size_t                         request_range_start,
+    size_t                         request_range_end
     )
 {
     /* Return value of this method. */
