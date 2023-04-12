@@ -1,5 +1,5 @@
 # Unit test build directory
-tests/build/*
+build/*
 
 
 # Prerequisites
