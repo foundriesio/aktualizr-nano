@@ -27,10 +27,12 @@
 
 static const uint32_t akNanoDeviceGateway_ROOT_CERTIFICATE_PEM_LEN = sizeof(AKNANO_DEVICE_GATEWAY_CERTIFICATE);
 
-static char bodyBuffer[500];
+static char bodyBuffer[1000];
 
 static void get_time_str(time_t boot_up_epoch, char *output)
 {
+    (void) boot_up_epoch;
+
     time_t current_epoch_sec = aknano_cli_get_current_epoch();
     struct tm *tm = gmtime(&current_epoch_sec);
 

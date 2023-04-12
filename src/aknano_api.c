@@ -402,7 +402,7 @@ int aknano_get_setting(struct aknano_context *aknano_context, const char *settin
     return 0;
 }
 
-int limit_sleep_time_range(int sleep_time)
+int aknano_limit_sleep_time_range(int sleep_time)
 {
     /* No less than 5 seconds, no more than 1 hour */
     if (sleep_time < 5)
@@ -499,7 +499,7 @@ void aknano_sample_loop(uint32_t *remaining_iterations)
         }
 
         sleep_time = aknano_get_setting(&aknano_context, "polling_interval");
-        sleep_time = limit_sleep_time_range(sleep_time);
+        sleep_time = aknano_limit_sleep_time_range(sleep_time);
         LogInfo(("Sleeping %d seconds. any_checkin_ok=%d temp_image=%d\n\n",
                  sleep_time, any_checkin_ok, aknano_is_temp_image(&aknano_settings)));
 
