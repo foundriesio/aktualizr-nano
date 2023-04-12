@@ -18,7 +18,7 @@ endif()
 # Set global path variables.
 get_filename_component(__MODULE_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
 set( MODULE_ROOT_DIR ${__MODULE_ROOT_DIR} CACHE INTERNAL "aktualizr-nano source root." )
-set( UNIT_TEST_DIR ${MODULE_ROOT_DIR}/tests/unit-test CACHE INTERNAL "aktualizr-nano unit test directory." )
+set( UNIT_TEST_DIR ${MODULE_ROOT_DIR}/test/unit-test CACHE INTERNAL "aktualizr-nano unit test directory." )
 set( UNITY_DIR ${UNIT_TEST_DIR}/Unity CACHE INTERNAL "Unity library source directory." )
 set( MBEDTLS_DIR ${UNIT_TEST_DIR}/mbedtls CACHE INTERNAL "MbedTLS library source directory." )
 set( CORE_JSON_DIR ${UNIT_TEST_DIR}/coreJSON CACHE INTERNAL "CoreJSON library source directory." )
@@ -70,7 +70,7 @@ target_compile_options(coverity_analysis PUBLIC -DTUF_JSON_QUERY_KEY_SEPARATOR='
 # ============================ Test configuration ==============================
 
 # Define a CMock resource path.
-set( CMOCK_DIR ${MODULE_ROOT_DIR}/tests/unit-test/CMock CACHE INTERNAL "CMock library source directory." )
+set( CMOCK_DIR ${MODULE_ROOT_DIR}/test/unit-test/CMock CACHE INTERNAL "CMock library source directory." )
 
 # Include CMock build configuration.
 include( unit-test/cmock_build.cmake )
