@@ -86,6 +86,8 @@ int tuf_client_read_local_file(enum tuf_role role, unsigned char *target_buffer,
 
 int tuf_client_write_local_file(enum tuf_role role, const unsigned char *data, size_t len, void *application_context)
 {
+    (void)application_context;
+
     // int i;
     int initial_offset;
     status_t ret;
