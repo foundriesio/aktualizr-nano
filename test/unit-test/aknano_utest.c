@@ -63,7 +63,6 @@ static const char *config_toml = \
 
 void test_aknano_targets_manifest( void )
 {
-    const char *data = "ERROR";
     int ret;
     struct aknano_context aknano_context = {0};
     struct aknano_settings aknano_settings = {0};
@@ -141,20 +140,25 @@ void test_aknano_targets_manifest( void )
 
 static uint64_t test_current_epoch_ms = TEST_DEFAULT_INITIAL_EPOCH_MS;
 
-static void stub_aknano_delay(uint32_t ms, int num_calls)
+static void stub_aknano_delay(uint32_t ms, int stub_num_calls)
 {
+    (void)stub_num_calls;
+
     test_current_epoch_ms += ms;
 }
 
-static time_t stub_aknano_cli_get_current_epoch(int num_calls)
+static time_t stub_aknano_cli_get_current_epoch(int stub_num_calls)
 {
+    (void)stub_num_calls;
     return test_current_epoch_ms / 1000;
 }
 
 #define TEST_RANDOM_SEED 66736278
 static bool test_random_seed_initialized = false;
-static status_t stub_aknano_cli_gen_random_bytes(char *output, size_t size, int num_calls)
+static status_t stub_aknano_cli_gen_random_bytes(char *output, size_t size, int stub_num_calls)
 {
+    (void)stub_num_calls;
+
     if (!test_random_seed_initialized) {
         srand(TEST_RANDOM_SEED);
         test_random_seed_initialized = true;
@@ -166,8 +170,10 @@ static status_t stub_aknano_cli_gen_random_bytes(char *output, size_t size, int 
     return 0;
 }
 
-const char *stub_aknano_get_board_name(int num_call)
+const char *stub_aknano_get_board_name(int stub_num_call)
 {
+    (void)stub_num_call;
+
     return TEST_BOARD_NAME;
 }
 
@@ -194,12 +200,16 @@ status_t stub_aknano_read_flash_storage(int offset, void *output, size_t outputM
 
 status_t stub_aknano_write_data_to_flash(int offset, const void *data, size_t data_len, int stub_num_calls)
 {
+    (void)stub_num_calls;
+
     memcpy(in_memory_flash + offset, data, data_len);
     return 0;
 }
 
 status_t stub_aknano_write_data_to_storage(int offset, const void *data, size_t data_len, int stub_num_calls)
 {
+    (void)stub_num_calls;
+
     return stub_aknano_write_data_to_flash(AKNANO_STORAGE_FLASH_OFFSET + offset, data, data_len, 0);
 }
 
@@ -253,9 +263,13 @@ enum test_type_aknano {
 
 BaseType_t stub_aknano_mtls_connect(struct aknano_network_context* network_context, const char* hostname, size_t hostname_len, uint16_t port, const char* server_root_ca, size_t server_root_ca_len, int stub_num_calls)
 {
+    (void)server_root_ca;
+    (void)server_root_ca_len;
+    (void)stub_num_calls;
+
     TEST_ASSERT(network_context != NULL);
     TEST_ASSERT(hostname != NULL);
-    TEST_ASSERT(hostname_len >= 0);
+    TEST_ASSERT(hostname_len > 0);
     TEST_ASSERT(port > 0);
 
     TEST_ASSERT(!network_context->is_connected);
@@ -309,31 +323,31 @@ BaseType_t stub_aknano_mtls_send_http_request(
 
     if (strcmp(pcMethod, HTTP_METHOD_GET) == 0) {
         if (strcmp(pcPath, "/config") == 0) {
-            network_context->reply_body = config_toml;
-            network_context->reply_body_len = strlen(network_context->reply_body);
+            network_context->reply_body = (uint8_t*)config_toml;
+            network_context->reply_body_len = strlen((const char*)network_context->reply_body);
         } else if (strcmp(pcPath, "/repo/13.root.json") == 0) {
-            network_context->reply_body = json_root_13;
-            network_context->reply_body_len = strlen(network_context->reply_body);
+            network_context->reply_body = (uint8_t*)json_root_13;
+            network_context->reply_body_len = strlen((const char*)network_context->reply_body);
         } else if (strcmp(pcPath, "/repo/timestamp.json") == 0) {
-            network_context->reply_body = json_timestamp;
-            network_context->reply_body_len = strlen(network_context->reply_body);
+            network_context->reply_body = (uint8_t*)json_timestamp;
+            network_context->reply_body_len = strlen((const char*)network_context->reply_body);
             if (test_ongoing_test_type == AKTEST_ERROR_TUF_METADATA_DOWNLOAD_FAILED) {
                 /* Emulate an error on the network operation */
                 return 0;
             }
         } else if (strcmp(pcPath, "/repo/snapshot.json") == 0) {
-            network_context->reply_body = json_snapshot;
-            network_context->reply_body_len = strlen(network_context->reply_body);
+            network_context->reply_body = (uint8_t*)json_snapshot;
+            network_context->reply_body_len = strlen((const char*)network_context->reply_body);
         } else if (strcmp(pcPath, "/repo/targets.json") == 0) {
-            network_context->reply_body = json_targets;
-            network_context->reply_body_len = strlen(network_context->reply_body);
+            network_context->reply_body = (uint8_t*)json_targets;
+            network_context->reply_body_len = strlen((const char*)network_context->reply_body);
             if (test_ongoing_test_type == AKTEST_ERROR_TUF_METADATA_TOO_BIG) {
                 /* For testing handling of "too big" metadata, just send the test fw binary instead */
                 network_context->reply_body = random_fw_4000_signed;
                 network_context->reply_body_len = random_fw_4000_signed_len;
             }
         } else if (strcmp(pcPath, "/mcu/files/64/12338049eed6bf15a9a8a5fe8b1b2773a9a4306a7610af30529ea16157a8a8.bin") == 0) {
-            TEST_ASSERT(request_range_start >= 0);
+            TEST_ASSERT(request_range_start <= request_range_end);
             TEST_ASSERT(request_range_end > 0);
             size_t file_len = random_fw_4000_signed_len;
             if (test_ongoing_test_type == AKTEST_ERROR_INCOMPLETE_DOWNLOAD)
