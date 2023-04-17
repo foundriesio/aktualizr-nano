@@ -6,12 +6,15 @@
  */
 #ifdef AKNANO_ALLOW_PROVISIONING
 
+#include <stdio.h>
+
 #include "aknano_secret.h"
 #include "aknano_provisioning.h"
 #include "aknano_device_gateway.h"
 #include "aknano_provisioning_secret.h"
 #include "aknano.h"
 #include "aknano_debug.h"
+#include "aknano_net.h"
 #include "aknano_pkcs11.h"
 #include "aknano_flash_storage.h"
 
@@ -31,11 +34,19 @@ int aknano_provision_device()
 
     int ret = 0;
 
-    char uuid[AKNANO_MAX_UUID_LENGTH];
-    char serial[AKNANO_MAX_SERIAL_LENGTH];
-    // char temp_buf[257];
+    char uuid[AKNANO_MAX_UUID_LENGTH] = { 0 };
+    char serial[AKNANO_MAX_SERIAL_LENGTH] = { 0 };
 
+#ifdef AKNANO_USE_MAC_ADDRESS_AS_DEVICE_UUID
+    uint8_t ipv4[4];
+    uint8_t mac[6];
+    aknano_get_ipv4_and_mac(ipv4, mac);
+    sprintf(uuid, "AA000000-0000-0000-0000-%02X%02X%02X%02X%02X%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    sprintf(serial, "AA000000000000000000%02X%02X%02X%02X%02X%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+#else
     aknano_gen_serial_and_uuid(uuid, serial);
+#endif
+
     LogInfo(("uuid=%s", uuid));
     LogInfo(("serial=%s", serial));
 
