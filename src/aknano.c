@@ -249,6 +249,8 @@ void aknano_init(struct aknano_settings *aknano_settings)
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
     bool registrationOk;
 #endif
+    LogInfo((AKNANO_TEST_MESSAGE_PREAMBLE " aknano_init AKNANO_HASH=" AKNANO_COMMIT_ID));
+    LogInfo((AKNANO_TEST_MESSAGE_PREAMBLE " aknano_init MANIFEST_HASH=" AKNANO_MANIFEST_COMMIT_ID));
 
 #ifdef AKNANO_TEST
     LogInfo(("aknano_run_tests Begin"));
@@ -308,6 +310,9 @@ void aknano_init(struct aknano_settings *aknano_settings)
     aknano_init_settings(aknano_settings);
 
     aknano_delay(100);
+    LogInfo((AKNANO_TEST_MESSAGE_PREAMBLE "aknano_init UUID=%s", aknano_settings->uuid));
+    LogInfo((AKNANO_TEST_MESSAGE_PREAMBLE "aknano_init RUNNING_VERSION=%u", aknano_settings->running_version));
+    LogInfo((AKNANO_TEST_MESSAGE_PREAMBLE "aknano_init RUNNING_FROM_SLOT=%u", aknano_settings->image_position));
 
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
     if (!xaknano_settings.is_device_registered) {

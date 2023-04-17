@@ -105,6 +105,18 @@
 #endif
 #endif
 
+#ifndef AKNANO_TEST_MESSAGE_PREAMBLE
+#define AKNANO_TEST_MESSAGE_PREAMBLE ""
+#endif
+
+#ifndef AKNANO_COMMIT_ID
+#define AKNANO_COMMIT_ID "UNKNOWN"
+#endif
+
+#ifndef AKNANO_MANIFEST_COMMIT_ID
+#define AKNANO_MANIFEST_COMMIT_ID "UNKNOWN"
+#endif
+
 /*
  * Altualizr-nano internal structs
  */
