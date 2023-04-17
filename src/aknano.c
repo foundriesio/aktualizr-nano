@@ -91,7 +91,7 @@ void aknano_init_settings(struct aknano_settings *aknano_settings)
     aknano_read_flash_storage(AKNANO_FLASH_OFF_ONGOING_UPDATE_COR_ID,
                               &aknano_settings->ongoing_update_correlation_id,
                               sizeof(aknano_settings->ongoing_update_correlation_id));
-    if (aknano_settings->ongoing_update_correlation_id[0] < 0)
+    if (aknano_settings->ongoing_update_correlation_id[0] < 0 || aknano_settings->ongoing_update_correlation_id[0] > 122)
         aknano_settings->ongoing_update_correlation_id[0] = 0;
     LogInfo(("aknano_init_settings: ongoing_update_correlation_id=%s",
              aknano_settings->ongoing_update_correlation_id));
