@@ -3,5 +3,5 @@ include_guard(GLOBAL)
 message("middleware_aktualizr-nano_el2go component is included.")
 
 target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
-    ${CMAKE_CURRENT_LIST_DIR}/src/aknano_el2go.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/platform/mcuxsdk/aknano_el2go.c
 )
