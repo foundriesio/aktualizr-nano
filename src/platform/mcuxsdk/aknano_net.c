@@ -158,7 +158,7 @@ BaseType_t aknano_mtls_send_http_request(
         }
     }
 
-    if (request_range_start >= 0) {
+    if (request_range_start > 0 && request_range_end > 0) {
         LogInfo(("Setting range header %d->%d", request_range_start, request_range_end));
         HTTPClient_AddRangeHeader(&xRequestHeaders,
                                   request_range_start,
@@ -187,12 +187,16 @@ BaseType_t aknano_mtls_send_http_request(
         LogInfo(("Received HTTP response from %s %.*s%.*s. Status Code=%u",
                  pcMethod, (int)hostname_len, hostname,
                  (int)xRequestInfo.pathLen, xRequestInfo.pPath, network_context->xResponse.statusCode));
+        if (network_context->xResponse.statusCode == 403) {
+            LogInfo(("Response Body: '%.*s'",
+                    (int)network_context->xResponse.bodyLen, network_context->xResponse.pBody));
+        }
         LogDebug(("Response Headers:\n%.*s\n",
-                  (int)pxResponse->headersLen, pxResponse->pHeaders));
+                  (int)network_context->xResponse.headersLen, network_context->xResponse.pHeaders));
         // LogInfo( ( "Status Code: %u",
         //             pxResponse->statusCode ) );
         LogDebug(("Response Body:\n%.*s",
-                  (int)pxResponse->bodyLen, pxResponse->pBody));
+                  (int)network_context->xResponse.bodyLen, network_context->xResponse.pBody));
     } else {
         LogError(("Failed to send HTTP %.*s request to %.*s%.*s: Error=%s.",
                   (int)xRequestInfo.methodLen, xRequestInfo.pMethod,
