@@ -449,6 +449,9 @@ void aknano_sample_loop(uint32_t *remaining_iterations)
             /* Check-in successful. Check selected target */
             bool is_update_required = false;
             bool is_reboot_required = false;
+            if (!any_checkin_ok) {
+                LogInfo((AKNANO_TEST_MESSAGE_PREAMBLE "Checkin successful"));
+            }
 
             any_checkin_ok = true;
             if (aknano_has_matching_target(&aknano_context)) {
