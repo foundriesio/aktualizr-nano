@@ -15,6 +15,8 @@
 #include "netif/ethernet.h"
 #include "transport_secure_sockets.h"
 
+#define LOG_LEVEL LOG_INFO
+
 #include "aknano_debug.h"
 #include "aknano_net.h"
 #include "aknano_secret.h"
@@ -158,7 +160,7 @@ BaseType_t aknano_mtls_send_http_request(
         }
     }
 
-    if (request_range_start > 0 && request_range_end > 0) {
+    if (request_range_end > 0) {
         LogInfo(("Setting range header %d->%d", request_range_start, request_range_end));
         HTTPClient_AddRangeHeader(&xRequestHeaders,
                                   request_range_start,
