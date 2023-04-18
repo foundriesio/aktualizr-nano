@@ -280,13 +280,15 @@ iot_agent_status_t iot_agent_print_uid(sss_se05x_session_t *pSession)
     SE05x_Result_t result = kSE05x_Result_NA;
 
     sm_status = Se05x_API_CheckObjectExists(&pSession->s_ctx, (uint32_t)kSE05x_AppletResID_UNIQUE_ID, &result);
-    if (SM_OK != sm_status)
+    if (SM_OK != sm_status) {
         EXIT_STATUS_MSG(IOT_AGENT_FAILURE, "UID not present on the secure element");
+    }
 
     sm_status =
         Se05x_API_ReadObject(&pSession->s_ctx, (uint32_t)kSE05x_AppletResID_UNIQUE_ID, 0U, (uint16_t)uidLen, uid, &uidLen);
-    if (SM_OK != sm_status)
+    if (SM_OK != sm_status) {
         EXIT_STATUS_MSG(IOT_AGENT_FAILURE, "Error in reading UID from the device");
+    }
     char uidHexString[(SE050_MODULE_UNIQUE_ID_LEN * 2U) + 1U];
 
     for (uint8_t i = 0U; i < SE050_MODULE_UNIQUE_ID_LEN; i++)
@@ -415,8 +417,9 @@ iot_agent_status_t agent_start(int argc, const char *argv[], ex_sss_boot_ctx_t *
     // doc: update device configuration - end
 
     // doc: iterating over services - start
-    if (!iot_agent_is_service_configuration_data_valid(&iot_agent_context))
+    if (!iot_agent_is_service_configuration_data_valid(&iot_agent_context)) {
         EXIT_STATUS_MSG(IOT_AGENT_FAILURE, "Not all configuration data is valid");
+    }
 
     // get total number of services
     number_of_services = iot_agent_get_number_of_services(&iot_agent_context);
