@@ -249,8 +249,8 @@ void aknano_init(struct aknano_settings *aknano_settings)
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
     bool registrationOk;
 #endif
-    LogInfo((AKNANO_TEST_MESSAGE_PREAMBLE " aknano_init AKNANO_HASH=" AKNANO_COMMIT_ID));
-    LogInfo((AKNANO_TEST_MESSAGE_PREAMBLE " aknano_init MANIFEST_HASH=" AKNANO_MANIFEST_COMMIT_ID));
+    LogInfo((AKNANO_TEST_MESSAGE_PREAMBLE "aknano_init AKNANO_HASH=" AKNANO_COMMIT_ID));
+    LogInfo((AKNANO_TEST_MESSAGE_PREAMBLE "aknano_init MANIFEST_HASH=" AKNANO_MANIFEST_COMMIT_ID));
 
 #ifdef AKNANO_TEST
     LogInfo(("aknano_run_tests Begin"));
