@@ -14,7 +14,10 @@
 #include "aknano_secret.h"
 #include "aknano_flash_storage.h"
 #include "aknano_device_gateway.h"
+
+#ifdef AKNANO_ALLOW_PROVISIONING
 #include "aknano_provisioning.h"
+#endif
 
 #if defined(AKNANO_ENABLE_EXPLICIT_REGISTRATION) || defined(AKNANO_ALLOW_PROVISIONING) || defined(AKNANO_RESET_DEVICE_ID)
 #include "aknano_pkcs11.h"
@@ -43,7 +46,7 @@ void aknano_init_settings(struct aknano_settings *aknano_settings)
 #endif
 
     memset(aknano_settings, 0, sizeof(*aknano_settings));
-    strcpy(aknano_settings->tag, "devel");
+    strcpy(aknano_settings->tag, AKNANO_DEFAULT_TAG);
     aknano_settings->polling_interval = 15;
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
     strcpy(aknano_settings->token, AKNANO_API_TOKEN);

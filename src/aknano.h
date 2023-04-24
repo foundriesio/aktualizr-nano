@@ -35,6 +35,9 @@
 #define AKNANO_MAX_TOKEN_LENGTH 100
 #endif
 
+#ifndef AKNANO_DEFAULT_TAG
+#define AKNANO_DEFAULT_TAG "devel"
+#endif
 /*
  * Aktualizr-nano storage
  */
