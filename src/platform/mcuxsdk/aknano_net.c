@@ -15,7 +15,9 @@
 #include "netif/ethernet.h"
 #include "transport_secure_sockets.h"
 
-#define LOG_LEVEL LOG_INFO
+#define LIBRARY_LOG_LEVEL LOG_INFO
+#define LIBRARY_LOG_NAME "aknano"
+#include "logging_stack.h"
 
 #include "aknano_debug.h"
 #include "aknano_net.h"

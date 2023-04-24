@@ -69,7 +69,6 @@ static int toml_handler(void *user, const char *section, const char *name,
     struct aknano_settings *aknano_settings = (struct aknano_settings *)user;
 
 #define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
-    LogInfo(("handler %s.%s=%s", section, name, value));
     if (MATCH("pacman", "tags")) {
         strncpy(aknano_settings->tag, value + 1, sizeof(aknano_settings->tag)-1);
         aknano_settings->tag[strlen(aknano_settings->tag) - 1] = 0; /* strip last " */
