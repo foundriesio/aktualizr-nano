@@ -127,6 +127,9 @@ int tuf_client_fetch_file(const char *file_base_name, unsigned char *target_buff
             /* aknano_context->dg_network_context->reply_body may overlap with target_buffer */
             memmove(target_buffer, aknano_context->dg_network_context->reply_body, aknano_context->dg_network_context->reply_body_len);
             target_buffer[aknano_context->dg_network_context->reply_body_len] = '\0';
+#ifdef AKNANO_DUMP_DOWNLOADED_TUF_METADATA
+            LogInfo(("Fetched TUF '%s': %s", file_base_name, target_buffer));
+#endif
             return TUF_SUCCESS;
         } else {
             return -aknano_context->dg_network_context->reply_http_code;
