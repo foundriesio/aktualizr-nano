@@ -239,6 +239,7 @@ int aknano_checkin(struct aknano_context *aknano_context)
 
 #ifdef AKNANO_TEST_ROLLBACK
 #warning "Compiling broken image for rollback test"
+        LogInfo((AKNANO_TEST_MESSAGE_PREAMBLE "_v%u ROLLBACK_TEST=1", aknano_settings->running_version));
         LogError((ANSI_COLOR_RED "This is a rollback test. Rebooting in 5 seconds" ANSI_COLOR_RESET));
         aknano_delay(5000);
         NVIC_SystemReset();
@@ -449,7 +450,7 @@ void aknano_sample_loop(uint32_t *remaining_iterations)
             bool is_update_required = false;
             bool is_reboot_required = false;
             if (!any_checkin_ok) {
-                LogInfo((AKNANO_TEST_MESSAGE_PREAMBLE "Checkin successful"));
+                LogInfo((AKNANO_TEST_MESSAGE_PREAMBLE "_v%u CHECKIN=successful", aknano_settings.running_version));
             }
 
             any_checkin_ok = true;
