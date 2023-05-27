@@ -510,7 +510,6 @@ void agent_start_task(void *args)
 
 void aknano_start_el2go_task()
 {
-    iot_agent_session_bm();
     cli_arguments_t args;
 
     args.c = 0;
