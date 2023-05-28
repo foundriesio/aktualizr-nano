@@ -7,8 +7,6 @@
 
 #ifdef AKNANO_ENABLE_EL2GO
 
-#include "lwipopts.h"
-
 /* SDK Included Files */
 #include "fsl_debug_console.h"
 #include "ksdk_mbedtls.h"
