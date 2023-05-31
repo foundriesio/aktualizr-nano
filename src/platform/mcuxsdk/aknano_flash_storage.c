@@ -149,11 +149,9 @@ bool aknano_verify_image(size_t image_size)
     }
     LogInfo(("Validating image of size %d", image_size));
 
-    struct image_header *ih;
-    ih = (struct image_header *)update_partition.start;
     if (bl_verify_image((void *)update_partition.start, image_size) <= 0) {
         /* Image validation failed */
-        LogError(("Image validation failed magic=0x%X", ih->ih_magic));
+        LogError(("Image validation failed"));
         return false;
     } else {
         LogInfo(("Image validation succeeded"));
