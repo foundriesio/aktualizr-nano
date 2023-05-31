@@ -46,7 +46,7 @@ void aknano_init_settings(struct aknano_settings *aknano_settings)
 #endif
 
     memset(aknano_settings, 0, sizeof(*aknano_settings));
-    strcpy(aknano_settings->tag, AKNANO_DEFAULT_TAG);
+    strncpy(aknano_settings->tag, AKNANO_DEFAULT_TAG, sizeof(aknano_settings->tag));
     aknano_settings->polling_interval = 15;
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
     strcpy(aknano_settings->token, AKNANO_API_TOKEN);
