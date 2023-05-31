@@ -249,6 +249,8 @@ void aknano_log_running_mode()
 #endif
 }
 
+static bool is_initialized = false;
+
 void aknano_init(struct aknano_settings *aknano_settings)
 {
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
@@ -349,4 +351,10 @@ void aknano_init(struct aknano_settings *aknano_settings)
     aknano_delay(20000);
 #endif
     aknano_settings->is_image_permanent = aknano_is_current_image_permanent();
+    is_initialized = true;
+}
+
+bool aknano_is_initialized()
+{
+    return is_initialized;
 }

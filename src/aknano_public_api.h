@@ -30,6 +30,7 @@ void aknano_init(struct aknano_settings *aknano_settings);
 void aknano_send_installation_finished_event(struct aknano_settings *aknano_settings);
 void aknano_set_image_confirmed(struct aknano_settings *aknano_settings);
 
+bool aknano_is_initialized();
 
 void aknano_sample_loop(uint32_t *remaining_iterations);
 void aknano_reboot_command();
