@@ -161,10 +161,8 @@ void aknano_send_installation_finished_event(struct aknano_settings *aknano_sett
     if (!aknano_settings->is_running_rolled_back_image && running_version_reported)
         return;
 
-    if (aknano_settings->is_running_rolled_back_image) {
+    if (aknano_settings->is_running_rolled_back_image)
         LogInfo(("A rollback was done"));
-        LogInfo((AKNANO_TEST_MESSAGE_PREAMBLE "/REVISION=v%u ROLLBACK=1", aknano_settings->running_version));
-    }
 
     aknano_send_event(aknano_settings,
                       AKNANO_EVENT_INSTALLATION_COMPLETED,
@@ -178,6 +176,8 @@ void aknano_send_installation_finished_event(struct aknano_settings *aknano_sett
     memset(aknano_settings->ongoing_update_correlation_id, 0,
            sizeof(aknano_settings->ongoing_update_correlation_id));
     aknano_update_settings_in_flash(aknano_settings);
+    if (aknano_settings->is_running_rolled_back_image)
+        LogInfo((AKNANO_TEST_MESSAGE_PREAMBLE "/REVISION=v%u ROLLBACK=1", aknano_settings->running_version));
 }
 
 #ifdef AKNANO_ALLOW_PROVISIONING
