@@ -275,6 +275,7 @@ void aknano_init(struct aknano_settings *aknano_settings)
     prvDestroyDefaultCryptoObjects();
 #ifdef AKNANO_ENABLE_EL2GO
     LogWarn((ANSI_COLOR_RED "Halting execution" ANSI_COLOR_RESET));
+    LogWarn((ANSI_COLOR_RED "Please load a firmware without AKNANO_RESET_DEVICE_ID enabled to proceed with re-provisioning" ANSI_COLOR_RESET));
     for (;;);
 #endif
 #endif
