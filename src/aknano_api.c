@@ -113,11 +113,15 @@ static void parse_config(const char *config_data, int buffer_len, struct aknano_
                              "z-50-fioctl.toml" TUF_JSON_QUERY_KEY_SEPARATOR "Value",
                              strlen("z-50-fioctl.toml" TUF_JSON_QUERY_KEY_SEPARATOR "Value"),
                              &value, &value_length, &data_type);
-        if (value_length < sizeof(unescaped_toml)) {
-            replace_escaped_chars(unescaped_toml, value, value_length);
-            ini_parse_string(unescaped_toml, toml_handler, aknano_settings);
+        if (result == JSONSuccess) {
+            if (value_length < sizeof(unescaped_toml)) {
+                replace_escaped_chars(unescaped_toml, value, value_length);
+                ini_parse_string(unescaped_toml, toml_handler, aknano_settings);
+            } else {
+                LogWarn(("z-50-fioctl.toml too big, skipping parsing. Size=%ld, limit=%ld", value_length, sizeof(unescaped_toml)));
+            }
         } else {
-            LogWarn(("z-50-fioctl.toml too big, skipping parsing. Size=%ld, limit=%ld", value_length, sizeof(unescaped_toml)));
+            LogInfo(("parse_config: z-50-fioctl.toml not found. JSON result=%d", result));
         }
 
         result = JSON_SearchConst(config_data, buffer_len,
