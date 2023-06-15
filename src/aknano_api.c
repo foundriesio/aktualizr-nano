@@ -29,7 +29,7 @@
 // #include "flexspi_flash_config.h"
 #include "libtufnano.h"
 
-#define AKNANO_MAX_ROLLED_BACK_VERSION_RETRIES  5
+#define AKNANO_MAX_ROLLED_BACK_VERSION_RETRIES  0
 
 /* 10 minutes */
 #define AKNANO_ROLLBACK_RETRY_BACKOFF_BASE 10
