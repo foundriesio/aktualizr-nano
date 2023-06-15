@@ -32,6 +32,10 @@ int aknano_get_image_position();
 
 #ifdef AKNANO_ALLOW_PROVISIONING
 status_t aknano_save_uuid_and_serial(const char *uuid, const char *serial);
+
+#ifdef AKNANO_RESET_DEVICE_ID
+int aknano_clear_provisioned_data();
+#endif
 #endif
 
 #endif

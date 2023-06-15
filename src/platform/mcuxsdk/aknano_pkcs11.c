@@ -21,14 +21,11 @@
 CK_RV prvDestroyDefaultCryptoObjects(void)
 {
     /* Find the certificate */
-    CK_OBJECT_HANDLE xHandle = 0;
     CK_RV xResult;
     CK_FUNCTION_LIST_PTR xFunctionList;
     CK_SLOT_ID xSlotId;
     CK_ULONG xCount = 1;
     CK_SESSION_HANDLE xSession;
-    CK_ATTRIBUTE xTemplate = { 0 };
-    uint8_t *pucCert = NULL;
     CK_BBOOL xSessionOpen = CK_FALSE;
 
     xResult = C_GetFunctionList(&xFunctionList);
