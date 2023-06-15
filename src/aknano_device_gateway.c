@@ -221,6 +221,9 @@ bool aknano_send_event(struct aknano_settings *aknano_settings,
                        int new_version, bool success)
 {
     struct aknano_network_context network_context;
+    BaseType_t xDemoStatus = pdFAIL;
+    int i;
+    #define AKNANO_EVENT_SENDING_RETRIES 5
 
 #ifdef AKNANO_ENABLE_EXPLICIT_REGISTRATION
     if (!aknano_settings->is_device_registered) {
@@ -228,29 +231,29 @@ bool aknano_send_event(struct aknano_settings *aknano_settings,
         return true;
     }
 #endif
+    for (i = 0; i < AKNANO_EVENT_SENDING_RETRIES && xDemoStatus != pdPASS; i++) {
+        xDemoStatus = aknano_connect_to_device_gateway(&network_context);
+        if (xDemoStatus != pdPASS) {
+            aknano_delay(2000);
+            continue;
+        }
 
-    BaseType_t xDemoStatus = pdPASS;
+        fill_event_payload(bodyBuffer, aknano_settings, event_type, new_version, success);
 
-    xDemoStatus = aknano_connect_to_device_gateway(&network_context);
-    if (xDemoStatus != pdPASS)
-        return true;
+        LogInfo((ANSI_COLOR_YELLOW "Sending %s event" ANSI_COLOR_RESET,
+                event_type));
+        LogInfo(("Event payload: %.80s (...)", bodyBuffer));
 
-    fill_event_payload(bodyBuffer, aknano_settings, event_type, new_version, success);
+        xDemoStatus = aknano_send_http_request(
+            &network_context,
+            HTTP_METHOD_POST,
+            "/events",
+            bodyBuffer,
+            strlen(bodyBuffer),
+            aknano_settings);
 
-    LogInfo((ANSI_COLOR_YELLOW "Sending %s event" ANSI_COLOR_RESET,
-             event_type));
-    LogInfo(("Event payload: %.80s (...)", bodyBuffer));
-
-    aknano_send_http_request(
-        &network_context,
-        HTTP_METHOD_POST,
-        "/events",
-        bodyBuffer,
-        strlen(bodyBuffer),
-        aknano_settings);
-
-
-    /* Close the network connection.  */
-    aknano_mtls_disconnect(&network_context);
-    return true;
+        /* Close the network connection.  */
+        aknano_mtls_disconnect(&network_context);
+    }
+    return xDemoStatus == pdPASS;
 }
