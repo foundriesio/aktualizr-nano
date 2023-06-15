@@ -50,6 +50,8 @@ int aknano_provision_device()
     LogInfo(("uuid=%s", uuid));
     LogInfo(("serial=%s", serial));
 
+    aknano_save_uuid_and_serial(uuid, serial);
+
 #ifndef AKNANO_ENABLE_EL2GO
     ret = aknano_gen_device_certificate_and_key(uuid, AKNANO_FACTORY_NAME,
                                                 serial, cert_buf, key_buf);
@@ -70,8 +72,6 @@ int aknano_provision_device()
     // aknano_read_flash_storage(AKNANO_FLASH_OFF_DEV_SERIAL, temp_buf, 256);
     // temp_buf[256] = 0;
     // LogInfo(("BEFORE serial=%s", temp_buf));
-
-    aknano_save_uuid_and_serial(uuid, serial);
 
     // aknano_read_flash_storage(AKNANO_FLASH_OFF_DEV_UUID, temp_buf, 256);
     // temp_buf[256] = 0;
