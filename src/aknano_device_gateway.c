@@ -95,7 +95,7 @@ static bool fill_event_payload(char *payload,
     char details[200];
     char current_time_str[50];
     char *correlation_id = aknano_settings->ongoing_update_correlation_id;
-    char target[sizeof(aknano_settings->hwid) + 15];
+    char target[AKNANO_MAX_TARGET_NAME_LENGTH];
     char evt_uuid[AKNANO_MAX_UUID_LENGTH], _serial_string[AKNANO_MAX_SERIAL_LENGTH];
     char *success_string;
 
@@ -189,7 +189,7 @@ BaseType_t aknano_send_http_request(struct aknano_network_context *network_conte
 {
     char *tag = aknano_settings->tag;
     int version = aknano_settings->running_version;
-    char active_target[200];
+    char active_target[AKNANO_MAX_TARGET_NAME_LENGTH];
 
     snprintf(active_target, sizeof(active_target), "%s-v%d", aknano_settings->hwid, version);
 
