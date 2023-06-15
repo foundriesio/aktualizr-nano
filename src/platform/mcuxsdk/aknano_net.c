@@ -94,7 +94,19 @@ BaseType_t aknano_mtls_connect(
     return xStatus;
 }
 
+static bool string_is_ascii(const char *s, size_t len)
+{
+    #define MAX_ASCII 126
+    #define MIN_ASCII 9
+    size_t i = 0;
 
+    while ((*s) && i < len) {
+        if ((*s) > MAX_ASCII || (*s) < MIN_ASCII)
+            return false;
+        s++;
+    }
+    return true;
+}
 
 BaseType_t aknano_mtls_send_http_request(
     struct aknano_network_context *network_context,
@@ -129,6 +141,10 @@ BaseType_t aknano_mtls_send_http_request(
 
     configASSERT(pcMethod != NULL);
     configASSERT(pcPath != NULL);
+    if (!string_is_ascii(pcBody, xBodyLen)) {
+        LogError(("aknano_mtls_send_http_request: Message body %.*s has invalid characters", xBodyLen, pcBody));
+        return pdFAIL;
+    }
 
     /* Initialize all HTTP Client library API structs to 0. */
     (void)memset(&xRequestInfo, 0, sizeof(xRequestInfo));
