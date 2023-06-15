@@ -67,11 +67,15 @@ static int toml_handler(void *user, const char *section, const char *name,
                         const char *value)
 {
     struct aknano_settings *aknano_settings = (struct aknano_settings *)user;
+    char new_tag[AKNANO_MAX_TAG_LENGTH] = {0};
 
 #define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
     if (MATCH("pacman", "tags")) {
-        strncpy(aknano_settings->tag, value + 1, sizeof(aknano_settings->tag)-1);
-        aknano_settings->tag[strlen(aknano_settings->tag) - 1] = 0; /* strip last " */
+        strncpy(new_tag, value + 1, strnlen(value + 1, sizeof(new_tag)) - 1); /* skip first and last " */
+        if (strncmp(aknano_settings->tag, new_tag, sizeof(aknano_settings->tag))) {
+            LogInfo(("parse_config_data: Updating tag '%s' => '%s'", aknano_settings->tag, new_tag));
+            strncpy(aknano_settings->tag, new_tag, sizeof(aknano_settings->tag));
+        }
     }
     return 1;
 }
