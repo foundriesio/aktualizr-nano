@@ -210,6 +210,12 @@ int aknano_gen_device_certificate_and_key(
     const char *not_after = "20301231235959";
     char issuer_subject[200];
 
+#ifdef AKNANO_PRODUCTION_DEVICE
+    const char *production = ",businessCategory=production";
+#else
+    const char *production = "";
+#endif
+
     mbedtls_mpi serial;
     mbedtls_entropy_context entropy;
     mbedtls_ctr_drbg_context ctr_drbg;
@@ -221,7 +227,7 @@ int aknano_gen_device_certificate_and_key(
 
     int ret;
 
-    sprintf(subject, "CN=%s,OU=%s", uuid, factory_name);
+    sprintf(subject, "CN=%s,OU=%s%s", uuid, factory_name, production);
 
 
     mbedtls_mpi_init(&serial);
